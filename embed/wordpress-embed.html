@@ -1,13 +1,14 @@
 <!--
   Inc42 Listed New-Age Tech Company Tracker: the table, for a Custom HTML block in the article.
-  It breaks out of the 659px reading column to the article's 1000px width, centred on the column, and stays inside
-  the screen on phones. The script needs an editor or administrator account. Without it the table still works, at the
-  fallback height below with its own scrollbar.
+  It breaks out of the reading column (659 to 760px, depending on the screen) to 1000px, centred on the column, and
+  stays inside the screen on phones. The site's theme caps every figure and iframe at 100% of the column, so the two
+  max-width rules below are needed. The script needs an editor or administrator account. Without it the table still
+  works, at the fallback height below with its own scrollbar.
 -->
 <style>
   /* Fallback heights until the widget reports its own (or if this block's script is stripped) */
-  .inc42-tracker-embed { width: min(1000px, calc(100vw - 24px)); margin: 24px 0 24px calc(50% - min(500px, 50vw - 12px)); padding: 0; }
-  #inc42-listed-tracker { display: block; width: 100%; height: 5150px; border: 0; }
+  .inc42-tracker-embed { width: min(1000px, calc(100vw - 24px)); max-width: none; margin: 24px 0 24px calc(50% - min(500px, 50vw - 12px)); padding: 0; }
+  #inc42-listed-tracker { display: block; width: 100%; max-width: none; height: 5150px; border: 0; }
   @media (max-width: 640px) { #inc42-listed-tracker { height: 5650px; } }
 </style>
 <figure class="inc42-tracker-embed">

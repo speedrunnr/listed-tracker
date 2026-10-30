@@ -87,8 +87,9 @@ it, and the next run recovers.
 
 Paste `embed/wordpress-embed.html` into a Custom HTML block. Use `embed/amp-embed.html` for AMP pages.
 
-- The block breaks out of the 659px reading column to the article's 1000px width, centred on the column, and fits the screen on
-  phones. The table scrolls sideways with its company column fixed.
+- The block breaks out of the reading column (659 to 760px, depending on the screen) to 1000px, centred on the column, and fits
+  the screen on phones. It overrides the theme's `max-width: 100%` on figures and iframes. The table scrolls sideways with its
+  company column fixed.
 - A small script sizes the frame to the table, including when a filter shortens it. It needs an editor or administrator account.
   Without it the table still works, at a fixed height with its own scrollbar.
 - Profiles open inside the frame. The back link returns to the table with the reader's filters, sort and scroll in place.
