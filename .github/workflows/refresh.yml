@@ -1,0 +1,144 @@
+name: Refresh and deploy
+
+# Three kinds of run, one at a time:
+#   live     profile prices and USD/INR, every 20 minutes in market hours. Publishes only if something changed.
+#   weekly   Saturday: the table's closes, then every profile (financials, Inc42 stories, price history). Commits the data.
+#   deploy   rebuilds the pages from the saved data and publishes. Use after a change to the code or settings.
+# Every run first adds any companies waiting in data/queue/. GitHub keeps only one waiting run per group, so a newer
+# run can replace a waiting one; because each run takes the whole queue, a company is never lost that way.
+# cron-job.org starts live and weekly through the API, because GitHub's own schedule can run hours late or not at all.
+# The schedule below is a backup for Saturday: if the 8:00 AM run happened, this one finds no new data and stops.
+
+on:
+  schedule:
+    - cron: "30 3 * * 6"     # Saturday 09:00 IST
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "What to run"
+        type: choice
+        options: [live, weekly, deploy]
+        default: live
+
+permissions:
+  contents: write     # the weekly data commit
+  pages: write        # publishing to GitHub Pages
+  id-token: write     # required by actions/deploy-pages
+
+concurrency:
+  group: tracker
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Kolkata
+  MODE: ${{ inputs.mode || 'weekly' }}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      # Each run starts empty, so the last published quotes are read back from the site. They are what a company
+      # keeps if Yahoo misses it this time, and how a run knows that nothing changed.
+      - name: Read back the last published quotes
+        run: curl -fsS --max-time 30 "${{ steps.pages.outputs.base_url }}/data/live/quotes.json" -o data/live_quotes.json || rm -f data/live_quotes.json
+
+      - name: Set the commit identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add queued companies
+        id: queue
+        shell: bash
+        run: |
+          ls data/queue/*.json >/dev/null 2>&1 || exit 0
+          python add_companies.py --queue | tee queue.log
+          grep -E '^(ADDED|FAILED|PENDING) ' queue.log >> "$GITHUB_STEP_SUMMARY" || true
+          if grep -q '^PUBLISH$' queue.log; then echo "added=true" >> "$GITHUB_OUTPUT"; fi
+          if grep -q '^FAILED ' queue.log; then echo "rejected=true" >> "$GITHUB_OUTPUT"; fi
+          git add config/companies.csv config/aliases.csv data/tracker.json data/history artifact/data data/queue
+          git diff --cached --quiet || git commit -m "Add companies $(date +%F)"
+          git pull --rebase origin main
+          git push
+
+      - name: Refresh the table
+        id: table
+        if: env.MODE == 'weekly'
+        run: |
+          code=0
+          python refresh.py || code=$?
+          # 2 = validation failed: the site keeps its last good data. 3 = the market date has not moved. That ends the
+          # run only if this week's profiles are done, because adding a company earlier in the day moves the date too.
+          as_of=$(python -c "import json; print(json.load(open('data/tracker.json'))['meta']['as_of'])")
+          if [ "$code" = 3 ]; then
+            code=0
+            if [ "$(cat data/weekly_done.txt 2>/dev/null)" = "$as_of" ]; then echo "stop=true" >> "$GITHUB_OUTPUT"; fi
+          fi
+          echo "as_of=$as_of" >> "$GITHUB_OUTPUT"
+          exit "$code"
+
+      - name: Rebuild every company profile
+        if: env.MODE == 'weekly' && steps.table.outputs.stop != 'true'
+        run: python build_profiles.py
+
+      - name: Build the pages
+        if: steps.table.outputs.stop != 'true' || steps.queue.outputs.added == 'true'
+        run: python refresh.py --rebuild
+
+      - name: Save the week's data
+        if: env.MODE == 'weekly' && steps.table.outputs.stop != 'true'
+        run: |
+          echo "${{ steps.table.outputs.as_of }}" > data/weekly_done.txt
+          git add data/tracker.json data/history data/weekly_done.txt artifact/data
+          git diff --cached --quiet || git commit -m "Weekly refresh $(date +%F)"
+          git pull --rebase origin main
+          git push
+
+      # The weekly and deploy runs still publish if this fails: profiles then show their saved prices until the next run
+      - name: Fetch live prices and USD/INR
+        id: live
+        if: steps.table.outputs.stop != 'true' || steps.queue.outputs.added == 'true'
+        continue-on-error: ${{ env.MODE != 'live' }}
+        shell: bash
+        run: |
+          python live_quotes.py --publish | tee live.log
+          echo "action=$(tail -n 1 live.log)" >> "$GITHUB_OUTPUT"
+
+      # A live run with nothing new (a holiday, a weekend) stops here
+      - name: Check the site
+        id: check
+        if: (steps.table.outputs.stop != 'true' || steps.queue.outputs.added == 'true') && (env.MODE != 'live' || steps.live.outputs.action == 'WRITE' || steps.queue.outputs.added == 'true')
+        run: python check_site.py
+
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.check.outcome == 'success'
+        with:
+          path: public
+
+      - id: deploy
+        if: steps.check.outcome == 'success'
+        uses: actions/deploy-pages@v4
+
+      # After the deploy, so one rejected company doesn't hold back the others. The red run emails the owner.
+      - name: Report rejected companies
+        if: steps.queue.outputs.rejected == 'true'
+        run: |
+          echo "A company was rejected. The reason is on this run's summary page."
+          exit 1

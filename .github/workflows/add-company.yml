@@ -1,0 +1,91 @@
+name: Add a company
+
+# Replaces the Add company button for the public site. Actions → Add a company → Run workflow. Only people with write
+# access to this repository can run it. This run only leaves a request in data/queue/, so several can be sent one after
+# another, and starts Refresh and deploy, which adds everything waiting and publishes. Fields reach the script through
+# environment variables and a JSON file, never through the shell, and add_companies.py validates every one against Yahoo.
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Company name"
+        required: true
+      ticker:
+        description: "Yahoo Finance ticker. NSE ends in .NS, BSE in .BO, NSE SME in -SM.NS, Nasdaq has no ending"
+        required: true
+      exchange:
+        description: "Listed on"
+        type: choice
+        options: ["NSE, BSE", "NSE", "BSE", "NSE (SME)", "BSE (SME)", "Nasdaq"]
+        default: "NSE, BSE"
+      sector:
+        description: "Sector, spelled exactly as in the tracker, or a new one"
+        required: true
+      listing_year:
+        description: "Listing year (optional: taken from Yahoo if blank)"
+      hq_city:
+        description: "Headquarters city (optional: taken from Yahoo if blank)"
+      aliases:
+        description: "Other names for news search, separated by commas (optional)"
+      debut_mcap:
+        description: "Debut market cap, INR Cr or USD Mn for Nasdaq (optional)"
+      listing_price:
+        description: "Listing price, the first-day open (optional)"
+      figures:
+        description: "Sales / YoY % / net profit, for example 1200 / 35 / -40 (optional: taken from Yahoo if blank)"
+
+permissions:
+  contents: write     # saving the request
+  actions: write      # starting the run that adds it
+
+jobs:
+  queue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Queue the company
+        env:
+          NAME: ${{ inputs.name }}
+          TICKER: ${{ inputs.ticker }}
+          EXCHANGE: ${{ inputs.exchange }}
+          SECTOR: ${{ inputs.sector }}
+          LISTING_YEAR: ${{ inputs.listing_year }}
+          HQ_CITY: ${{ inputs.hq_city }}
+          ALIASES: ${{ inputs.aliases }}
+          DEBUT_MCAP: ${{ inputs.debut_mcap }}
+          LISTING_PRICE: ${{ inputs.listing_price }}
+          FIGURES: ${{ inputs.figures }}
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          e = os.environ
+          amount = lambda v: v.replace(",", "").strip()
+          sales, yoy, profit = ([amount(x) for x in e["FIGURES"].split("/")] + ["", "", ""])[:3]
+          doc = {"name": e["NAME"], "ticker": e["TICKER"].strip().upper(), "exchange": e["EXCHANGE"], "sector": e["SECTOR"].strip(),
+                 "listing_year": e["LISTING_YEAR"].strip(), "hq_city": e["HQ_CITY"].strip(), "aliases": [a.strip() for a in e["ALIASES"].split(",") if a.strip()],
+                 "debut_mcap": amount(e["DEBUT_MCAP"]), "listing_price": amount(e["LISTING_PRICE"]), "sales": sales, "sales_yoy": yoy, "net_profit": profit}
+          json.dump(doc, open(f"data/queue/{e['GITHUB_RUN_ID']}.json", "w"), ensure_ascii=False)
+          EOF
+
+      # Requests sent close together can reach here at once. Each has its own file, so a rebase settles it.
+      - name: Save the request
+        env:
+          TICKER: ${{ inputs.ticker }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/queue
+          git commit -m "Queue ${TICKER}"
+          for wait in 5 10 15 20 25; do
+            if git pull --rebase origin main && git push; then exit 0; fi
+            sleep "$wait"
+          done
+          exit 1
+
+      - name: Start the run that adds it
+        run: gh workflow run refresh.yml -f mode=deploy
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -1,0 +1,47 @@
+<!--
+  Inc42 Listed New-Age Tech Company Tracker: the table, for a Custom HTML block in the article.
+  It breaks out of the 659px reading column to the article's 1000px width, centred on the column, and stays inside
+  the screen on phones. The script needs an editor or administrator account. Without it the table still works, at the
+  fallback height below with its own scrollbar.
+-->
+<style>
+  /* Fallback heights until the widget reports its own (or if this block's script is stripped) */
+  .inc42-tracker-embed { width: min(1000px, calc(100vw - 24px)); margin: 24px 0 24px calc(50% - min(500px, 50vw - 12px)); padding: 0; }
+  #inc42-listed-tracker { display: block; width: 100%; height: 5150px; border: 0; }
+  @media (max-width: 640px) { #inc42-listed-tracker { height: 5650px; } }
+</style>
+<figure class="inc42-tracker-embed">
+  <iframe
+    id="inc42-listed-tracker"
+    src="https://speedrunnr.github.io/listed-tracker/"
+    title="Inc42 Listed New-Age Tech Company Tracker: search, filter and sort every listed company"
+    loading="lazy"
+    width="100%"
+    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <figcaption style="font-size:13px;line-height:1.4;color:#666;margin-top:8px;">
+    Table not loading? <a href="https://speedrunnr.github.io/listed-tracker/" target="_blank" rel="noopener">Open the tracker</a>.
+  </figcaption>
+</figure>
+<script>
+  (function () {
+    var frame = document.getElementById("inc42-listed-tracker");
+    if (!frame) return;
+    var origin = new URL(frame.getAttribute("src"), location.href).origin;
+    var pages = 0;
+    var HEADER = 100;   // the site's sticky header
+    window.addEventListener("message", function (e) {
+      if (e.origin !== origin || e.source !== frame.contentWindow) return;
+      var d = e.data;
+      if (!d) return;
+      // The reader moved between the table and a profile inside the frame: bring the top of the new page into view
+      if (d.type === "inc42-tracker-page") {
+        var top = frame.getBoundingClientRect().top;
+        if (pages++ && top < HEADER) window.scrollBy(0, top - HEADER);
+        return;
+      }
+      // The widget reports its content height whenever it changes; the frame follows it
+      if (d.type !== "inc42-tracker-height" || typeof d.height !== "number") return;
+      frame.style.height = Math.max(400, Math.min(12000, Math.round(d.height))) + "px";
+    });
+  })();
+</script>

@@ -1,0 +1,23 @@
+<!--
+  Inc42 Listed New-Age Tech Company Tracker: the table, for an AMP article.
+  Needs the amp-iframe component in the page <head> (most AMP setups include it already):
+    <script async custom-element="amp-iframe" src="https://cdn.ampproject.org/v0/amp-iframe-0.1.js"></script>
+
+  The widget posts AMP's "embed-size" message, so with `resizable` the frame grows to fit after the reader interacts
+  with it. AMP only resizes on interaction, so the "Show the full table" bar stays until then. AMP requires the frame
+  to be at least 600px from the top of the page or carry a placeholder: the placeholder below covers that.
+-->
+<amp-iframe
+  src="https://speedrunnr.github.io/listed-tracker/"
+  title="Inc42 Listed New-Age Tech Company Tracker: search, filter and sort every listed company"
+  width="360" height="760" layout="responsive"
+  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+  resizable frameborder="0">
+  <div placeholder style="display:flex;align-items:center;justify-content:center;background:#fff6f6;color:#333;font:15px/1.4 system-ui,sans-serif;">
+    Loading the tracker…
+  </div>
+  <div overflow tabindex="0" role="button" aria-label="Show the full table"
+    style="background:#fff;color:#d81757;text-align:center;padding:12px;font:600 14px system-ui,sans-serif;border-top:1px solid #e8e2dd;">
+    Show the full table
+  </div>
+</amp-iframe>

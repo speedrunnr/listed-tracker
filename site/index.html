@@ -1,0 +1,825 @@
+<title>Indian Listed New-Age Tech Company Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Inc42 Datalabs tracker of India's listed new-age tech companies: market cap, listing gains, FY26 sales and profit, by sector, city and listing year. Refreshed every Saturday.">
+<script>
+  // ?theme=light|dark wins, then the reader's saved choice; otherwise the system setting applies
+  (function () {
+    try {
+      var r = document.documentElement, u = new URLSearchParams(location.search), q = u.get("theme"), s = null;
+      try { s = localStorage.getItem("lt-theme"); } catch (e) {}
+      // an embed sits in an Inc42 article, which has no dark mode
+      var t = q || (u.get("widget") || r.getAttribute("data-widget") ? "light" : s);
+      if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: page header → key highlights → the tracker table → sector and city panels side by side →
+   listings-by-year and time-to-IPO side by side → notes. Every section is also a standalone embed (?widget=…). */
+:root {
+  --bg: #ffffff;
+  --surface: #fff6f6;
+  --card: #ffffff;
+  --card-line: #e8e2dd;
+  --card-shadow: none;
+  --raised: #ffffff;
+  --ink: #030303;
+  --ink-2: #333333;
+  --muted: #666666;
+  --hair: #f0eae6;
+  --hair-strong: #ddd3cd;
+  --wash: rgba(214, 50, 46, 0.07);
+  --up: #0a7a3d;
+  --down: #c4201b;
+  --brand: #d6322e;
+  --focus: #5546ff;
+  --bar: linear-gradient(90deg, #d81757 0%, #e4381b 100%);
+  --bar-soft: #f6c9ae;
+  --shadow: 0 10px 28px rgba(3, 3, 3, 0.12), 0 2px 6px rgba(3, 3, 3, 0.05);
+  --font: "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r-card: 8px;
+  --r-ctl: 6px;
+  --link: #d6322e;
+  --brand-grad: linear-gradient(90deg, #d81757 0%, #d8341a 100%);   /* the Inc42 nav bar, its orange end deepened to carry white text */
+  --tile: #fff6f6;               /* the tint of the article's Summary box */
+  --kpi-val: #d6322e;
+  --eyebrow: #d6322e;
+  --head-bg: #fff6f6;
+  --head-rule: #030303;
+  --row-hover: #fff6f6;
+  --on: #030303;                 /* the selected control */
+  --on-ink: #ffffff;
+  --on-ring: transparent;
+  --cta: linear-gradient(90deg, #d81757 0%, #d8341a 100%);
+  --cta-ink: #ffffff;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111316; --surface: #1b1e22; --card: #1b1e22; --card-line: #1b1e22; --card-shadow: none; --raised: #23272c;
+    --ink: #eceef0; --ink-2: #b9bdc3; --muted: #8b9097; --hair: #2b2f35; --hair-strong: #3a3f46; --wash: rgba(236, 238, 240, 0.07);
+    --up: #81c995; --down: #f28b82; --brand: #ff4d6a; --focus: #6ea8f0; --bar: #3987e5; --bar-soft: #2a3f5c;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --link: #6ea8f0; --tile: #1b1e22; --kpi-val: #eceef0; --eyebrow: #8b9097; --head-bg: #1b1e22; --head-rule: #3a3f46; --row-hover: #23272c; --on: #23272c; --on-ink: #eceef0; --on-ring: #2b2f35; --cta: #eceef0; --cta-ink: #111316;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111316; --surface: #1b1e22; --card: #1b1e22; --card-line: #1b1e22; --card-shadow: none; --raised: #23272c;
+  --ink: #eceef0; --ink-2: #b9bdc3; --muted: #8b9097; --hair: #2b2f35; --hair-strong: #3a3f46; --wash: rgba(236, 238, 240, 0.07);
+  --up: #81c995; --down: #f28b82; --brand: #ff4d6a; --focus: #6ea8f0; --bar: #3987e5; --bar-soft: #2a3f5c;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --link: #6ea8f0; --tile: #1b1e22; --kpi-val: #eceef0; --eyebrow: #8b9097; --head-bg: #1b1e22; --head-rule: #3a3f46; --row-hover: #23272c; --on: #23272c; --on-ink: #eceef0; --on-ring: #2b2f35; --cta: #eceef0; --cta-ink: #111316;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); color: var(--ink); }
+body { margin: 0; font: 15px/1.45 var(--font); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button, select, input { font: inherit; color: inherit; }
+button { transition: background-color .15s var(--ease), color .15s var(--ease), box-shadow .15s var(--ease); -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+::selection { background: color-mix(in srgb, var(--focus) 24%, transparent); }
+.num { font-variant-numeric: tabular-nums; }
+a { color: var(--link); text-underline-offset: 3px; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 20px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+/* In an article the widget has no frame of its own: the page's column is the frame */
+.embed .wrap { padding-block: 4px 8px; padding-inline: 2px; gap: 12px; }
+.embed .card { background: none; border: 0; padding: 0; --pad: 0px; }
+.embed .brow { margin-inline: 0; padding-inline: 0; width: 100%; }
+.embed .brow:hover, .embed .brow[aria-pressed="true"] { box-shadow: none; background: none; }
+
+/* ---------- page header ---------- */
+.head { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: start; }
+.head h1 { margin: 0; font-size: 28px; line-height: 1.25; font-weight: 700; text-wrap: balance; grid-column: 1; }
+.head .tools-r { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 8px; align-items: center; }
+.mark { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 4px; background: var(--brand-grad);
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; white-space: nowrap; }
+.mark i { display: none; }
+.stamp { color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 14px; grid-column: 1; }
+.stamp .live { display: inline-flex; align-items: center; gap: 6px; }
+.stamp .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--up); }
+.themebtn { width: 36px; height: 36px; border-radius: var(--r-ctl); border: 0; background: var(--surface); cursor: pointer; display: grid; place-items: center; }
+.themebtn:hover { background: var(--wash); }
+.themebtn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- cards and section heads ---------- */
+.card { background: var(--card); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); border-radius: var(--r-card);
+  --pad: 22px; padding: 20px var(--pad) 22px; display: grid; gap: 16px; min-width: 0; align-content: start; }
+.sec-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 16px; }
+.sec-head > div { min-width: 0; }
+.eyebrow { margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--eyebrow); }
+.sec-head h2 { margin: 0; font-size: 22px; line-height: 1.3; font-weight: 700; text-wrap: balance; }
+.sec-head .sub { margin: 3px 0 0; color: var(--ink-2); font-size: 14px; }
+.foot { color: var(--muted); font-size: 12.5px; margin: 0; }
+.seg { display: inline-flex; padding: 3px; border-radius: var(--r-ctl); background: var(--surface); flex: none; }
+.seg button { border: 0; background: none; cursor: pointer; height: 32px; padding: 0 14px; border-radius: var(--r-ctl); font-weight: 500; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--on); color: var(--on-ink); font-weight: 600; box-shadow: 0 0 0 1px var(--on-ring); }
+
+/* ---------- key highlights ---------- */
+/* The ruled list of the Inc42 infographics: figure first in red, then what it counts, on the Summary box tint */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--hair); border: 1px solid var(--hair); border-radius: var(--r-card); overflow: hidden; }
+.kpi { background: var(--tile); padding: 16px 18px; display: grid; gap: 3px; align-content: start; min-width: 0; }
+.kpi span { font-size: 14px; font-weight: 500; color: var(--ink); line-height: 1.35; }
+.kpi b { order: -1; font-size: 30px; font-weight: 700; line-height: 1.2; color: var(--kpi-val); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.kpi b.word { font-size: 19px; line-height: 1.3; padding-block: 6px 5px; }
+.kpi small { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.kpi small .up, .movers .up, td.up, .tip .up { color: var(--up); }
+.kpi small .down, .movers .down, td.down, .tip .down { color: var(--down); }
+.movers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 32px; }
+.movers h3 { margin: 0; padding-bottom: 7px; border-bottom: 2px solid var(--head-rule); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
+.movers ol { margin: 0; padding: 0; list-style: none; display: grid; }
+.movers li { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 6px 0; border-bottom: 1px solid var(--hair); }
+.movers li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.movers li b { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------- table ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.search { flex: 1 1 220px; min-width: 0; position: relative; }
+.search svg { position: absolute; left: 14px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
+.search input { width: 100%; height: 40px; border-radius: var(--r-ctl); border: 1px solid var(--hair-strong); background: var(--card); color: var(--ink); padding: 0 16px 0 40px; }
+.search input::placeholder { color: var(--muted); }
+.filters select { height: 40px; border-radius: var(--r-ctl); border: 1px solid var(--hair-strong); background-color: var(--card); color: var(--ink); padding: 0 34px 0 14px; max-width: 100%;
+  appearance: none; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+.countline { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: center; font-size: 13px; color: var(--muted); }
+.clear { border: 0; background: none; color: var(--link); cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 2px; }
+.tablewrap { overflow-x: auto; margin: 0 calc(-1 * var(--pad)); padding: 0 var(--pad); -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+th { text-align: left; vertical-align: bottom; font-weight: 600; color: var(--ink-2); background: var(--head-bg); font-size: 12px; line-height: 1.3; padding: 9px 10px; border-top: 2px solid var(--head-rule); border-bottom: 1px solid var(--hair-strong); white-space: nowrap; }
+th button { border: 0; background: none; cursor: pointer; color: inherit; font: inherit; padding: 0; display: inline-flex; gap: 4px; align-items: flex-end; text-align: inherit; }
+th button:hover { color: var(--ink); }
+th .u { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
+th .lbl { display: block; }
+th .ar { width: 9px; flex: none; opacity: 0; font-size: 10px; line-height: 1.6; }
+th[aria-sort] button { color: var(--ink); font-weight: 700; }
+th[aria-sort] .ar { opacity: 1; color: var(--eyebrow); }
+th.r, td.r { text-align: right; }
+th.r button { flex-direction: row-reverse; }
+td { padding: 10px; border-bottom: 1px solid var(--hair); font-variant-numeric: tabular-nums; vertical-align: middle; white-space: nowrap; background: var(--card); }
+tbody tr:hover td { background: var(--row-hover); }
+th:first-child, td:first-child { position: sticky; left: 0; z-index: 1; }
+td:first-child { font-weight: 600; white-space: normal; min-width: 150px; max-width: 210px; }
+td:first-child small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+td:first-child::after, th:first-child::after { content: ""; position: absolute; top: 0; bottom: -1px; right: -1px; width: 1px; background: var(--hair); }
+td .sub { display: block; font-size: 11.5px; color: var(--muted); }
+td.pct { font-weight: 600; }
+td.na { color: var(--muted); }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; padding: 2px 7px; border-radius: 4px; background: var(--surface); color: var(--ink-2); }
+.empty-row td { text-align: center; color: var(--muted); padding: 28px 10px; white-space: normal; position: static; }
+td a.co { color: inherit; text-decoration: underline; text-decoration-color: var(--hair-strong); text-underline-offset: 3px; }
+td a.co:hover { color: var(--link); text-decoration-color: currentColor; }
+.pend { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px; background: var(--wash); color: var(--ink-2); }
+.addbtn { height: 40px; padding: 0 16px; border: 0; border-radius: var(--r-ctl); background: var(--cta); color: var(--cta-ink); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.addbtn:hover { opacity: .88; }
+.adds { display: grid; gap: 2px; background: var(--surface); border-radius: var(--r-card); padding: 12px 14px; }
+.adds h3 { margin: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.addrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 12px; align-items: center; padding: 6px 0; border-top: 1px solid var(--hair); font-size: 14px; }
+.addrow:first-of-type { border-top: 0; }
+.addrow .n { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.addrow .n small { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; }
+.chip { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 4px; background: var(--wash); color: var(--ink-2); white-space: nowrap; }
+.chip.ok { color: var(--up); } .chip.bad { color: var(--down); }
+.linkbtn { border: 0; background: none; color: var(--link); cursor: pointer; font-weight: 600; font-size: 13px; padding: 4px 2px; }
+dialog { border: 0; padding: 0; border-radius: var(--r-card); background: var(--raised); color: var(--ink); box-shadow: var(--shadow); width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 32px); }
+dialog::backdrop { background: rgba(10, 12, 16, 0.5); }
+.addform { display: grid; gap: 14px; padding: 20px; }
+.addform h2 { margin: 0; font-size: 22px; font-weight: 700; }
+.addform > p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.fgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.field { display: grid; gap: 4px; min-width: 0; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.field.wide { grid-column: 1 / -1; }
+.field small { font-weight: 400; color: var(--muted); font-size: 12px; }
+.field input, .field select { width: 100%; height: 40px; border-radius: var(--r-ctl); border: 1px solid var(--hair-strong); background: var(--bg); color: var(--ink); padding: 0 12px; font-size: 14.5px; font-weight: 400; }
+.addform details summary { cursor: pointer; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.addform details[open] summary { margin-bottom: 10px; }
+.formerr { margin: 0; color: var(--down); font-size: 13.5px; font-weight: 500; }
+.formbtns { display: flex; justify-content: flex-end; gap: 8px; }
+.ghost { height: 40px; padding: 0 16px; border-radius: var(--r-ctl); border: 1px solid var(--hair-strong); background: none; cursor: pointer; font-weight: 500; }
+.notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
+
+/* ---------- bar lists (sectors, cities) ---------- */
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.duo.wide-left { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+.bars { display: grid; gap: 2px; }
+.brow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 12px; align-items: baseline; padding: 8px 8px; margin: 0 -8px;
+  border: 0; background: none; text-align: left; cursor: pointer; border-radius: var(--r-ctl); width: calc(100% + 16px); }
+.brow:hover { background: var(--wash); }
+.brow[aria-pressed="true"] { background: var(--wash); box-shadow: inset 0 0 0 1px var(--hair-strong); }
+.brow .lab { font-size: 14px; color: var(--ink); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.brow .lab small { color: var(--muted); font-weight: 400; margin-left: 4px; }
+.brow .track { height: 8px; position: relative; grid-column: 1 / -1; grid-row: 2; }
+.brow .val small { font-weight: 400; color: var(--muted); font-size: 12.5px; margin-left: 6px; }
+.brow .track i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--bar); border-radius: 0 2px 2px 0; min-width: 3px; }
+.brow .val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 14px; }
+.brow .names { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); line-height: 1.4; white-space: normal; }
+.region { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; color: var(--ink-2); background: var(--surface); padding: 1px 6px; border-radius: 4px; margin-left: 6px; vertical-align: 1px; }
+
+/* ---------- listings by year (columns) ---------- */
+.cols { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; height: 210px; align-items: end;
+  border-bottom: 1px solid var(--hair-strong); padding-top: 22px; }
+.col { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border: 0; background: none; padding: 0; cursor: default; }
+.col i { display: block; width: 100%; max-width: 30px; background: var(--bar-soft); border-radius: 2px 2px 0 0; }
+.col.top i { background: var(--bar); }
+.col b { font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink-2); margin-bottom: 3px; }
+.col:hover i, .col:focus-visible i { background: var(--bar); }
+.xlabels { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; font-size: 11px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.xlabels span { overflow: visible; white-space: nowrap; }
+.hbars { display: grid; gap: 14px; padding-top: 4px; }
+.hb { display: grid; gap: 6px; }
+.hb .row { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-2); }
+.hb .row b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.hb .track { height: 28px; background: var(--surface); border-radius: 0 4px 4px 0; }
+.hb .track i { display: block; height: 100%; background: var(--bar); border-radius: 0 4px 4px 0; }
+.hb.soft .track i { background: var(--bar-soft); }
+
+.tip { position: absolute; z-index: 30; pointer-events: none; background: var(--raised); color: var(--ink); border-radius: var(--r-ctl); box-shadow: var(--shadow);
+  padding: 9px 12px; font-size: 13px; max-width: 260px; line-height: 1.4; }
+.tip .t { font-weight: 600; margin-bottom: 2px; }
+.tip .m { color: var(--muted); font-size: 12.5px; }
+
+.about { display: grid; gap: 8px; }
+.about p:not(.eyebrow) { margin: 0; color: var(--ink-2); font-size: 13.5px; max-width: 75ch; }
+.links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; }
+
+@media (max-width: 900px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .duo, .duo.wide-left { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .head { grid-template-columns: minmax(0, 1fr); }
+  .head .tools-r { grid-column: 1; grid-row: 1; justify-content: space-between; }
+  .head h1 { font-size: 22px; grid-row: 2; }
+  .stamp { grid-row: 3; font-size: 13px; }
+  .card { --pad: 14px; padding-block: 16px 18px; }
+  .sec-head h2 { font-size: 19px; }
+  .fgrid { grid-template-columns: minmax(0, 1fr); }
+  .field.wide { grid-column: auto; }
+  .kpi { padding: 12px 13px; }
+  .kpi span { font-size: 13px; }
+  .kpi b { font-size: 24px; }
+  .kpi b.word { font-size: 17px; }
+  .movers { grid-template-columns: 1fr; }
+  .xlabels span:not(.k) { visibility: hidden; }
+  .cols, .xlabels { gap: 2px; }
+  .col b { font-size: 9.5px; letter-spacing: -0.03em; }
+  td:first-child { min-width: 128px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap" id="app">
+  <header class="head" id="pagehead">
+    <h1 id="title">Indian Listed New-Age Tech Company Tracker</h1>
+    <div class="tools-r">
+      <span class="mark"><i></i>Inc42 Datalabs</span>
+      <button class="themebtn" id="themebtn" type="button" aria-label="Switch to dark theme"></button>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </header>
+
+  <section class="card" id="highlights" data-widget="highlights" aria-labelledby="h-hl">
+    <div class="sec-head"><div><p class="eyebrow">Key highlights</p><h2 id="h-hl">India's new-age tech IPO boom in numbers</h2></div><span class="foot w-stamp"></span></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="movers" id="movers"></div>
+    <p class="foot" id="movers-note"></p>
+  </section>
+
+  <section class="card" id="table" data-widget="table" aria-labelledby="h-tb">
+    <div class="sec-head"><div><p class="eyebrow">The tracker</p><h2 id="h-tb">Every listed new-age tech company</h2></div><span class="foot w-stamp"></span></div>
+    <div class="filters">
+      <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Search a company" aria-label="Search a company" autocomplete="off"></label>
+      <div class="seg" role="group" aria-label="Exchange" id="exseg"></div>
+      <select id="sector" aria-label="Sector"></select>
+      <select id="year" aria-label="Listing year"></select>
+      <button class="addbtn" id="addbtn" type="button" hidden>Add company</button>
+    </div>
+    <div class="adds" id="adds" hidden></div>
+    <div class="countline"><span id="count"></span><button class="clear" id="clear" type="button" hidden>Clear filters</button></div>
+    <div class="tablewrap"><table id="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
+    <ul class="notes" id="tnotes"></ul>
+  </section>
+
+  <div class="duo">
+    <section class="card" id="sectors" data-widget="sectors" aria-labelledby="h-sc">
+      <div class="sec-head"><div><p class="eyebrow">By sector</p><h2 id="h-sc"></h2><p class="sub" id="sc-sub"></p></div>
+        <div class="seg" role="group" aria-label="Measure" id="sc-seg"></div></div>
+      <div class="bars" id="sc-bars"></div>
+      <p class="foot">Select a sector to filter the tracker table.</p>
+    </section>
+    <section class="card" id="hubs" data-widget="hubs" aria-labelledby="h-hq">
+      <div class="sec-head"><div><p class="eyebrow">By headquarters</p><h2 id="h-hq"></h2><p class="sub" id="hq-sub"></p></div>
+        <div class="seg" role="group" aria-label="Group by" id="hq-seg"></div></div>
+      <div class="bars" id="hq-bars"></div>
+      <p class="foot" id="hq-foot"></p>
+    </section>
+  </div>
+
+  <div class="duo wide-left">
+    <section class="card" id="years" data-widget="years" aria-labelledby="h-yr">
+      <div class="sec-head"><div><p class="eyebrow">Listings by year</p><h2 id="h-yr"></h2><p class="sub" id="yr-sub"></p></div></div>
+      <div style="position:relative">
+        <div class="cols" id="yr-cols" role="list"></div>
+        <div class="xlabels" id="yr-x" aria-hidden="true"></div>
+      </div>
+      <p class="foot">Hover or tap a column for the companies. Counts include the two Nasdaq listings.</p>
+    </section>
+    <section class="card" id="time" data-widget="time" aria-labelledby="h-tm">
+      <div class="sec-head"><div><p class="eyebrow">Time to IPO</p><h2 id="h-tm"></h2></div></div>
+      <div class="hbars" id="tm-bars"></div>
+      <p class="foot" id="tm-note"></p>
+    </section>
+  </div>
+
+  <section class="card about" id="about" data-widget="about" aria-labelledby="h-ab">
+    <div class="sec-head"><div><p class="eyebrow">About this data</p><h2 id="h-ab">Sources and method</h2></div></div>
+    <ul class="notes" id="footnotes"></ul>
+    <div class="links" id="links"></div>
+  </section>
+</div>
+<div class="tip" id="tip" hidden></div>
+<dialog id="adddlg" aria-labelledby="add-title">
+  <form class="addform" id="addform" novalidate>
+    <h2 id="add-title">Add a company</h2>
+    <p>Enter the name and Yahoo Finance ticker. Everything else is filled in from Yahoo; add your own figures below to override them.</p>
+    <div class="fgrid">
+      <label class="field wide">Company name<input id="a-name" autocomplete="off" maxlength="80" required></label>
+      <label class="field">Yahoo Finance ticker<input id="a-ticker" autocomplete="off" maxlength="24" required placeholder="EXAMPLE.NS">
+        <small>NSE ends in .NS, BSE in .BO, NSE SME in -SM.NS. Nasdaq has no ending.</small></label>
+      <label class="field">Listed on<select id="a-exchange"><option>NSE, BSE</option><option>NSE</option><option>BSE</option><option>NSE (SME)</option><option>BSE (SME)</option><option>Nasdaq</option></select></label>
+      <label class="field">Sector<select id="a-sector"></select></label>
+      <label class="field" id="a-newsec-w" hidden>New sector name<input id="a-newsec" autocomplete="off" maxlength="48"></label>
+      <label class="field">Listing year<input id="a-year" inputmode="numeric" maxlength="4"></label>
+      <label class="field">Headquarters city<input id="a-city" list="a-cities" autocomplete="off" maxlength="40"><datalist id="a-cities"></datalist><small>Optional. Taken from Yahoo if blank.</small></label>
+      <label class="field wide">Other names for news search<input id="a-aliases" autocomplete="off" maxlength="120" placeholder="Brand names, separated by commas"></label>
+    </div>
+    <details>
+      <summary>Add your own figures (optional)</summary>
+      <div class="fgrid">
+        <label class="field">Debut market cap<input id="a-debut" inputmode="decimal"><small>INR Cr, or USD Mn for Nasdaq</small></label>
+        <label class="field">Listing price<input id="a-lp" inputmode="decimal"><small>First-day open</small></label>
+        <label class="field">Sales, latest year<input id="a-sales" inputmode="decimal"></label>
+        <label class="field">Sales change YoY (%)<input id="a-yoy" inputmode="decimal"></label>
+        <label class="field">Net profit, latest year<input id="a-np" inputmode="decimal"></label>
+      </div>
+    </details>
+    <p class="formerr" id="a-err" role="alert" hidden></p>
+    <div class="formbtns"><button class="ghost" id="a-cancel" type="button">Cancel</button><button class="addbtn" id="a-save" type="submit">Add company</button></div>
+  </form>
+</dialog>
+
+<script>
+window.TRACKER = /*__TRACKER_DATA__*/null;
+</script>
+<script>
+(function () {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const params = new URLSearchParams(location.search);
+// the single widget this page shows: from the URL, or built in on the public site
+const WIDGET = params.get("widget") || document.documentElement.dataset.widget || null;
+const VIEW_KEY = "inc42:tracker:view";
+
+function start(D) {
+  const M = D.meta;
+  let FX = M.usd_inr, fxAt = Date.parse(M.refreshed_at) / 1000;      // the rate saved with the data, until a newer one arrives
+  const published = D.rows.map((r, i) => Object.assign({ id: i }, r));
+  let rows = published;                 // published companies, plus queued additions for people who can add them
+  const isUSD = (r) => r.currency === "USD";
+  const toCr = (r, v) => (v == null ? null : isUSD(r) ? v * FX / 10 : v);       // USD Mn -> INR Cr
+  const crToUsdBn = (cr) => cr / (FX * 100);
+  const segOf = (r) => /nasdaq/i.test(r.exchange) ? "Nasdaq" : /SME/.test(r.exchange) ? "SME" : "Mainboard";
+
+  // ---------- formatting ----------
+  const nf0 = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  const nf1 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const nf2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const minus = (s) => s.replace(/^-/, "−");
+  const usdMn = (v) => v == null ? null : Math.abs(v) >= 1000 ? minus("$" + nf1.format(v / 1000) + " Bn").replace("$-", "−$") : minus("$" + nf0.format(v) + " Mn").replace("$-", "−$");
+  const money = (r, v) => v == null ? null : isUSD(r) ? usdMn(v) : minus(nf0.format(v));
+  const price = (r, v) => v == null ? null : (isUSD(r) ? "$" : "") + (v < 100 ? nf2.format(v) : nf0.format(v));
+  const pct = (v) => v == null ? null : minus((v > 0 ? "+" : "") + (Math.abs(v) < 10 ? nf1.format(v) : nf0.format(v)) + "%");
+  const bn = (usdBn) => usdBn > 0 && usdBn < 0.05 ? "<$0.1 Bn" : "$" + (usdBn >= 100 ? nf0.format(usdBn) : nf1.format(usdBn)) + " Bn";
+  const dfmt = (iso, opt) => new Date(iso + "T12:00:00+05:30").toLocaleDateString("en-IN", Object.assign({ day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }, opt || {}));
+  const dirCls = (v) => v == null ? "" : v > 0 ? "up" : v < 0 ? "down" : "";
+  const listJoin = (a) => a.length <= 2 ? a.join(" and ") : a.slice(0, -1).join(", ") + " and " + a[a.length - 1];
+
+  // ---------- header and stamps ----------
+  const asOf = dfmt(M.as_of, { weekday: "short" });
+  const renderStamp = () => { $("stamp").innerHTML = `<span class="live">Closing prices of ${esc(asOf)}</span><span>Refreshed ${esc(M.schedule.replace("Every ", "every "))}</span><span>USD/INR ${nf2.format(FX)}</span>`; };
+  renderStamp();
+  document.querySelectorAll(".w-stamp").forEach((el) => { el.textContent = "As of " + dfmt(M.as_of); });
+
+  // ---------- key highlights ----------
+  const group = (key) => {
+    const m = new Map();
+    rows.forEach((r) => { const k = key(r); if (!k) return; const g = m.get(k) || { k, n: 0, cr: 0, names: [] }; g.n++; g.cr += toCr(r, r.mcap) || 0; g.names.push(r); m.set(k, g); });
+    return [...m.values()];
+  };
+  const leaders = (gs, f) => { const top = Math.max(...gs.map(f)); return gs.filter((g) => f(g) === top); };
+  let totCr, sectors, regions, cities, yrs, topSec, topReg, topYr;
+  function renderHighlights() {
+  const live = rows.filter((r) => r.mcap != null);
+  totCr = live.reduce((s, r) => s + toCr(r, r.mcap), 0);
+  const wkRows = live.filter((r) => r.week_price && r.price);
+  const wkNow = wkRows.reduce((s, r) => s + toCr(r, r.mcap), 0);
+  const wkThen = wkRows.reduce((s, r) => s + toCr(r, r.mcap) * r.week_price / r.price, 0);
+  const wkChg = wkThen ? (wkNow / wkThen - 1) * 100 : null;
+  const salesCr = rows.reduce((s, r) => s + (toCr(r, r.sales) || 0), 0);
+  const withNP = rows.filter((r) => r.net_profit != null);
+  const prof = withNP.filter((r) => r.net_profit > 0).length;
+  const lossCr = withNP.filter((r) => r.net_profit < 0).reduce((s, r) => s + toCr(r, r.net_profit), 0);
+  const nIndia = rows.filter((r) => !isUSD(r)).length;
+
+  sectors = group((r) => r.sector); regions = group((r) => r.hq_region); cities = group((r) => r.hq_city); yrs = group((r) => String(r.listing_year));
+  topSec = leaders(sectors, (g) => g.n); topReg = leaders(regions, (g) => g.n); topYr = leaders(yrs, (g) => g.n).sort((a, b) => a.k - b.k);
+  const kpi = (label, value, small, word) => `<div class="kpi"><span>${label}</span><b class="${word ? "word" : ""}">${value}</b>${small ? `<small>${small}</small>` : ""}</div>`;
+  $("kpis").innerHTML = [
+    kpi("Listed companies", nf0.format(rows.length), `${nIndia} in India, ${rows.length - nIndia} on Nasdaq`),
+    kpi("Combined market cap", bn(crToUsdBn(totCr)), wkChg == null ? "" : `<span class="${dirCls(wkChg)}">${pct(wkChg)}</span> this week`),
+    kpi(`Combined ${esc(M.financials_label)} revenue`, bn(crToUsdBn(salesCr)), `₹${nf1.format(salesCr / 1e5)} lakh Cr in INR terms`),
+    kpi("Profitable now", Math.round(prof / withNP.length * 100) + "%", `${prof} of ${withNP.length} posted a ${esc(M.financials_label)} profit`),
+    kpi("Combined net loss", bn(crToUsdBn(-lossCr)), `across the ${withNP.length - prof - withNP.filter((r) => r.net_profit === 0).length} loss-making companies`),
+    kpi("Biggest startup hub", esc(topReg.map((g) => g.k).join(" & ")), `${topReg[0].n} listed, ${bn(crToUsdBn(topReg[0].cr))} market cap`, true),
+    kpi("Most listings by sector", esc(listJoin(topSec.map((g) => g.k))), `${topSec[0].n} companies ${topSec.length > 1 ? "each" : ""}`, true),
+    kpi("Busiest listing year", esc(listJoin(topYr.map((g) => g.k))), `${topYr[0].n} listings ${topYr.length > 1 ? "each" : ""}`, true),
+  ].join("");
+
+  const mv = live.filter((r) => r.week_chg != null && !r.stale && toCr(r, r.mcap) >= 1000).sort((a, b) => b.week_chg - a.week_chg);
+  const mvList = (a) => a.map((r) => `<li><span>${esc(r.name)}</span><b class="${dirCls(r.week_chg)}">${pct(r.week_chg)}</b></li>`).join("");
+  $("movers").innerHTML = mv.length ? `<div><h3>Top gainers this week</h3><ol>${mvList(mv.slice(0, 5))}</ol></div><div><h3>Top losers this week</h3><ol>${mvList(mv.slice(-5).reverse())}</ol></div>` : "";
+  $("movers-note").textContent = mv.length ? "Weekly moves compare the latest close with the close a week earlier, for companies above ₹1,000 Cr in market cap." : "";
+  }
+
+  // the hash carries the id where a host drops the query (the claude.ai artifact viewer)
+  const profileHref = (r) => { const q = new URLSearchParams({ id: r.profile }), t = params.get("theme") || (WIDGET ? "light" : null); if (t) q.set("theme", t); return `company.html?${q}#${r.profile}`; };
+
+  // ---------- table ----------
+  const fl = M.financials_label;
+  const COLS = [
+    { k: "name", l: "Company", s: (r) => r.name.toLowerCase(), v: (r) => `${r.profile ? `<a class="co" href="${esc(profileHref(r))}">${esc(r.name)}</a>` : esc(r.name)}<small>${r.pending ? `<span class="pend">Waiting for data</span>` : esc(r.hq_city || "")}</small>` },
+    { k: "sector", l: "Sector", s: (r) => r.sector, v: (r) => esc(r.sector) },
+    { k: "exchange", l: "Listed On", s: (r) => r.exchange, v: (r) => esc(r.exchange) },
+    { k: "listing_year", l: "Listing Year", r: 1, s: (r) => r.listing_year, v: (r) => r.listing_year },
+    { k: "debut_mcap", l: "Debut Market Cap**", u: "INR Cr / USD", r: 1, s: (r) => toCr(r, r.debut_mcap), v: (r) => money(r, r.debut_mcap) },
+    { k: "mcap", l: "Current Market Cap*", u: "INR Cr / USD", r: 1, s: (r) => toCr(r, r.mcap), v: (r) => money(r, r.mcap) },
+    { k: "mcap_chg", l: "% Change", u: "since debut", r: 1, pc: 1, s: (r) => r.mcap_chg, v: (r) => pct(r.mcap_chg) },
+    { k: "listing_price", l: "Listing Price***", u: "INR / USD", r: 1, s: (r) => r.listing_price, v: (r) => price(r, r.listing_price) },
+    { k: "price", l: "Current Stock Price", u: "INR / USD", r: 1, s: (r) => r.price, v: (r) => price(r, r.price) + (r.price_date && r.price_date !== M.as_of ? `<span class="sub">${esc(dfmt(r.price_date, { year: undefined }))} close</span>` : "") },
+    { k: "price_chg", l: "% Change", u: "since listing", r: 1, pc: 1, s: (r) => r.price_chg, v: (r) => pct(r.price_chg) },
+    { k: "week_chg", l: "1 Week", u: "price change", r: 1, pc: 1, s: (r) => r.week_chg, v: (r) => pct(r.week_chg) },
+    { k: "sales", l: `Sales (${fl})`, u: "INR Cr / USD", r: 1, s: (r) => toCr(r, r.sales), v: (r) => money(r, r.sales) },
+    { k: "sales_yoy", l: "YoY Change", u: "sales", r: 1, pc: 1, s: (r) => r.sales_yoy, v: (r) => pct(r.sales_yoy) },
+    { k: "net_profit", l: `Net Profit (${fl})`, u: "INR Cr / USD", r: 1, s: (r) => toCr(r, r.net_profit), v: (r) => money(r, r.net_profit) },
+  ];
+  const st = { q: "", ex: "All", sector: "", year: "", sort: "mcap", dir: -1 };
+  // A reader coming back from a profile lands on the same filters, sort and scroll
+  let backX = 0;
+  try {
+    const v = JSON.parse(sessionStorage.getItem(VIEW_KEY) || "null");
+    sessionStorage.removeItem(VIEW_KEY);
+    if (v && COLS.some((c) => c.k === v.sort)) { backX = v.x || 0; delete v.x; Object.assign(st, v); $("q").value = st.q; }
+  } catch (e) { /* nothing remembered */ }
+  $("tbody").addEventListener("click", (e) => {
+    if (!e.target.closest("a.co")) return;
+    try { sessionStorage.setItem(VIEW_KEY, JSON.stringify(Object.assign({}, st, { x: document.querySelector(".tablewrap").scrollLeft }))); } catch (err) { /* not remembered */ }
+  });
+
+  $("thead").innerHTML = COLS.map((c) => `<th class="${c.r ? "r" : ""}" data-k="${c.k}" scope="col"><button type="button"><span><span class="lbl">${esc(c.l)}</span>${c.u ? `<span class="u">${esc(c.u)}</span>` : ""}</span><span class="ar" aria-hidden="true"></span></button></th>`).join("");
+  $("thead").addEventListener("click", (e) => {
+    const th = e.target.closest("th"); if (!th) return;
+    const k = th.dataset.k;
+    if (st.sort === k) st.dir = -st.dir; else { st.sort = k; st.dir = ["name", "sector", "exchange"].includes(k) ? 1 : -1; }
+    renderTable();
+  });
+
+  $("exseg").innerHTML = ["All", "Mainboard", "SME", "Nasdaq"].map((x) => `<button type="button" data-v="${x}">${x}</button>`).join("");
+  $("exseg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; st.ex = b.dataset.v; renderTable(); });
+  function renderFilterOptions() {
+    const secNames = [...new Set(rows.map((r) => r.sector))].sort();
+    $("sector").innerHTML = `<option value="">All sectors</option>` + secNames.map((s) => `<option>${esc(s)}</option>`).join("");
+    const yrNames = [...new Set(rows.map((r) => r.listing_year))].sort((a, b) => b - a);
+    $("year").innerHTML = `<option value="">All listing years</option>` + yrNames.map((y) => `<option>${y}</option>`).join("");
+    $("sector").value = st.sector; $("year").value = st.year;
+  }
+  $("q").addEventListener("input", (e) => { st.q = e.target.value.trim().toLowerCase(); renderTable(); });
+  $("sector").addEventListener("change", (e) => { st.sector = e.target.value; renderTable(); syncSectorBars(); });
+  $("year").addEventListener("change", (e) => { st.year = e.target.value; renderTable(); });
+  $("clear").addEventListener("click", () => {
+    Object.assign(st, { q: "", ex: "All", sector: "", year: "" });
+    $("q").value = ""; $("sector").value = ""; $("year").value = ""; renderTable(); syncSectorBars();
+  });
+
+  function renderTable() {
+    const col = COLS.find((c) => c.k === st.sort);
+    let list = rows.filter((r) => (!st.q || r.name.toLowerCase().includes(st.q) || r.ticker.toLowerCase().includes(st.q) || (r.hq_city || "").toLowerCase().includes(st.q))
+      && (st.ex === "All" || segOf(r) === st.ex) && (!st.sector || r.sector === st.sector) && (!st.year || String(r.listing_year) === st.year));
+    list.sort((a, b) => {
+      if (!!a.pending !== !!b.pending) return a.pending ? -1 : 1;     // a queued addition stays in view
+      const x = col.s(a), y = col.s(b);
+      if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
+      return (typeof x === "string" ? x.localeCompare(y) : x - y) * st.dir;
+    });
+    $("tbody").innerHTML = list.length ? list.map((r) => `<tr>${COLS.map((c, i) => {
+      const v = c.v(r);
+      if (i === 0) return `<td>${v}</td>`;
+      const cls = [c.r ? "r" : "", c.pc ? "pct " + dirCls(c.s(r)) : "", v == null ? "na" : ""].join(" ");
+      return `<td class="${cls}">${v == null ? "—" : v}</td>`;
+    }).join("")}</tr>`).join("") : `<tr class="empty-row"><td colspan="${COLS.length}">No company matches these filters. Clear the filters to see all ${rows.length}.</td></tr>`;
+    document.querySelectorAll("#thead th").forEach((th) => {
+      const on = th.dataset.k === st.sort;
+      if (on) th.setAttribute("aria-sort", st.dir > 0 ? "ascending" : "descending"); else th.removeAttribute("aria-sort");
+      th.querySelector(".ar").textContent = on ? (st.dir > 0 ? "▲" : "▼") : "▼";
+    });
+    document.querySelectorAll("#exseg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === st.ex)));
+    $("sector").value = st.sector;
+    const filtered = st.q || st.ex !== "All" || st.sector || st.year;
+    $("count").textContent = filtered ? `Showing ${list.length} of ${rows.length} companies` : `${rows.length} companies, sorted by ${(col.l.replace(/\*+$/, "") + (col.pc && col.u ? " " + col.u : "")).toLowerCase()}`;
+    $("clear").hidden = !filtered;
+  }
+  // On its own the table carries every note, since the About section isn't there to hold the rest
+  const istTime = (ms) => new Date(ms).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
+  function renderNotes() {
+    const note = (n) => `<li>${esc(n)}</li>`, starred = M.footnotes.filter((n) => /^\*/.test(n));
+    const closing = [`USD/INR ${nf2.format(FX)}, fetched ${istTime(fxAt * 1000)} IST.`, `Last refreshed ${istTime(Date.parse(M.refreshed_at))} IST.`].map(note).join("");
+    $("tnotes").innerHTML = starred.map(note).join("") + (WIDGET === "table" ? M.footnotes.filter((n) => !/^\*/.test(n)).map(note).join("") + closing : "");
+    $("footnotes").innerHTML = M.footnotes.map(note).join("") + closing;
+  }
+  renderNotes();
+
+  // ---------- bar lists ----------
+  function bars(el, groups, measure, opts) {
+    const val = (g) => measure === "n" ? g.n : crToUsdBn(g.cr);
+    const sorted = groups.slice().sort((a, b) => val(b) - val(a) || b.n - a.n);
+    const max = Math.max(...sorted.map(val)) || 1;
+    el.innerHTML = sorted.map((g) => {
+      const names = g.names.slice().sort((a, b) => (toCr(b, b.mcap) || 0) - (toCr(a, a.mcap) || 0)).map((r) => r.name.replace(/ (Limited|Ltd)$/, ""));
+      const v = val(g), shown = measure === "n" ? nf0.format(v) : bn(v);
+      const tag = opts.tag ? opts.tag(g) : "";
+      return `<${opts.button ? "button type=\"button\"" : "div"} class="brow" data-k="${esc(g.k)}" ${opts.button ? `aria-pressed="false" aria-label="${esc(g.k)}: ${shown}. Filter the table"` : ""}>
+        <span class="lab">${esc(g.k)}${tag}</span><span class="track"><i style="width:${(v / max * 100).toFixed(2)}%"></i></span><span class="val">${shown}</span>
+        <span class="names">${esc(names.join(", "))}</span></${opts.button ? "button" : "div"}>`;
+    }).join("");
+  }
+  const scState = { m: "n" };
+  $("sc-seg").innerHTML = `<button type="button" data-v="n">Companies</button><button type="button" data-v="cr">Market cap</button>`;
+  function renderSectors() {
+    bars($("sc-bars"), sectors, scState.m, { button: true });
+    document.querySelectorAll("#sc-seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === scState.m)));
+    const topCap = leaders(sectors, (g) => g.cr)[0];
+    $("h-sc").textContent = `${listJoin(topSec.map((g) => g.k))} lead with ${topSec[0].n} listings${topSec.length > 1 ? " each" : ""}`;
+    $("sc-sub").textContent = `${topCap.k} is the most valuable sector at ${bn(crToUsdBn(topCap.cr))}, ${Math.round(topCap.cr / totCr * 100)}% of the combined market cap.`;
+    syncSectorBars();
+  }
+  function syncSectorBars() { document.querySelectorAll("#sc-bars .brow").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.k === st.sector))); }
+  $("sc-seg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; scState.m = b.dataset.v; renderSectors(); });
+  $("sc-bars").addEventListener("click", (e) => {
+    const b = e.target.closest(".brow"); if (!b) return;
+    st.sector = st.sector === b.dataset.k ? "" : b.dataset.k; renderTable(); syncSectorBars();
+    if (!document.body.classList.contains("embed") && st.sector) $("table").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  });
+
+  const hqState = { by: "city" };
+  $("hq-seg").innerHTML = `<button type="button" data-v="city">Cities</button><button type="button" data-v="region">Regions</button>`;
+  function renderHubs() {
+    const ncrCities = new Set(rows.filter((r) => r.hq_region === "Delhi NCR").map((r) => r.hq_city));
+    const gs = hqState.by === "city" ? cities : regions;
+    bars($("hq-bars"), gs, "n", { tag: (g) => hqState.by === "city" && ncrCities.has(g.k) ? `<span class="region">NCR</span>` : "" });
+    // market cap goes in the value column alongside the count, as the graphic does
+    document.querySelectorAll("#hq-bars .brow").forEach((el) => {
+      const g = gs.find((x) => x.k === el.dataset.k);
+      el.querySelector(".val").innerHTML = `${g.n}<small>${bn(crToUsdBn(g.cr))}</small>`;
+    });
+    document.querySelectorAll("#hq-seg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === hqState.by)));
+    const top = topReg[0], second = regions.filter((g) => g !== top).sort((a, b) => b.n - a.n)[0];
+    $("h-hq").textContent = `${top.k} leads with ${top.n} listed companies`;
+    $("hq-sub").textContent = `${top.k} companies are worth ${bn(crToUsdBn(top.cr))} together${second ? `; ${second.k} follows with ${second.n} worth ${bn(crToUsdBn(second.cr))}` : ""}.`;
+    const unk = rows.filter((r) => !r.hq_city).map((r) => r.name);
+    $("hq-foot").textContent = "Bars show the number of listed companies, with their combined market cap beside the count. Delhi NCR covers Gurugram, Noida and New Delhi." + (unk.length ? ` Headquarters not yet recorded: ${unk.join(", ")}.` : "");
+  }
+  $("hq-seg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; hqState.by = b.dataset.v; renderHubs(); });
+
+  // ---------- listings by year ----------
+  let byY = new Map();
+  function renderYears() {
+  const ymin = Math.min(...rows.map((r) => r.listing_year)), ymax = Math.max(...rows.map((r) => r.listing_year));
+  const span = []; for (let y = ymin; y <= ymax; y++) span.push(y);
+  byY = new Map(yrs.map((g) => [+g.k, g]));
+  const ymaxN = Math.max(...yrs.map((g) => g.n));
+  $("yr-cols").innerHTML = span.map((y) => {
+    const g = byY.get(y), n = g ? g.n : 0;
+    return `<div class="col ${n === ymaxN ? "top" : ""}" role="listitem" tabindex="${n ? 0 : -1}" data-y="${y}" aria-label="${y}: ${n} listing${n === 1 ? "" : "s"}">
+      ${n ? `<b>${n}</b>` : ""}<i style="height:${n ? Math.max(n / ymaxN * 100, 1.5) : 0}%"></i></div>`;
+  }).join("");
+  $("yr-x").innerHTML = span.map((y) => `<span class="${y % 5 === 0 || y === ymin || y === ymax ? "k" : ""}">’${String(y).slice(2)}</span>`).join("");
+  const recent = span.slice(-5).reduce((s, y) => s + (byY.get(y) ? byY.get(y).n : 0), 0);
+  $("h-yr").textContent = topYr.length > 1 ? `${listJoin(topYr.map((g) => g.k))} tie for the most listings, ${topYr[0].n} each` : `${topYr[0].k} holds the record with ${topYr[0].n} listings`;
+  $("yr-sub").textContent = `${recent} of the ${rows.length} companies listed in the last five years (${span[span.length - 5]}–${ymax}).`;
+  }
+
+  const tip = $("tip");
+  function showTip(el, html) {
+    tip.innerHTML = html; tip.hidden = false;
+    const r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+    let x = r.left + r.width / 2 - tw / 2 + scrollX; x = Math.max(scrollX + 8, Math.min(x, scrollX + document.documentElement.clientWidth - tw - 8));
+    let y = r.top + scrollY - th - 8; if (y < scrollY + 4) y = r.bottom + scrollY + 8;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  const hideTip = () => { tip.hidden = true; };
+  const yearTip = (el) => {
+    const g = byY.get(+el.dataset.y); if (!g) return hideTip();
+    showTip(el, `<div class="t">${g.k}: ${g.n} listing${g.n === 1 ? "" : "s"}</div><div class="m">${esc(g.names.map((r) => r.name.replace(/ (Limited|Ltd)$/, "")).join(", "))}</div>`);
+  };
+  const cols = $("yr-cols");
+  cols.addEventListener("mouseover", (e) => { const c = e.target.closest(".col"); if (c) yearTip(c); });
+  cols.addEventListener("mouseleave", hideTip);
+  cols.addEventListener("focusin", (e) => { const c = e.target.closest(".col"); if (c) yearTip(c); });
+  cols.addEventListener("focusout", hideTip);
+  cols.addEventListener("click", (e) => { const c = e.target.closest(".col"); if (c) yearTip(c); });
+  document.addEventListener("click", (e) => { if (!e.target.closest(".col")) hideTip(); });
+  addEventListener("scroll", hideTip, { passive: true });
+
+  function renderAll() { renderHighlights(); renderFilterOptions(); renderTable(); renderSectors(); renderHubs(); renderYears(); }
+  renderAll();
+  document.querySelector(".tablewrap").scrollLeft = backX;
+
+  // ---------- USD/INR ----------
+  // Every conversion on this page reads FX, so a newer rate only has to be set here. The saved rate stays if none arrives.
+  function setFx(rate, at) {
+    if (!(rate > 50 && rate < 200)) return;
+    const changed = rate !== FX;
+    FX = rate; fxAt = at || fxAt;
+    if (changed) { renderAll(); renderStamp(); }
+    renderNotes();
+  }
+
+  // ---------- add a company ----------
+  // Shown only to people with edit access to this artifact (the owner, and anyone the owner makes an Editor).
+  // The server applies the same rule to the "additions" collection, so hiding the button is not the protection.
+  const NCR = new Set(["Gurugram", "Gurgaon", "Noida", "New Delhi", "Delhi"]);
+  const TICKER = /^[A-Z0-9&_-]{1,20}(\.(NS|BO))?$/;
+  let adds = [], addCol = null;
+
+  function mergeAdds() {
+    const known = new Set(published.map((r) => r.ticker));
+    const queued = adds.filter((a) => a.status === "pending" && !known.has(a.ticker)).map((a, i) => ({
+      id: 1e6 + i, name: a.name, ticker: a.ticker, currency: a.exchange === "Nasdaq" ? "USD" : "INR", sector: a.sector, exchange: a.exchange,
+      listing_year: a.listing_year || new Date().getFullYear(), hq_city: a.hq_city || "", hq_region: NCR.has(a.hq_city) ? "Delhi NCR" : a.hq_city || "",
+      mcap: null, debut_mcap: a.debut_mcap ?? null, listing_price: a.listing_price ?? null, price: null, sales: a.sales ?? null, sales_yoy: a.sales_yoy ?? null,
+      net_profit: a.net_profit ?? null, pending: true }));
+    rows = published.concat(queued);
+    renderAll();
+    renderAdds();
+  }
+  function renderAdds() {
+    const box = $("adds"), list = adds.slice().sort((a, b) => String(b.requested_at).localeCompare(String(a.requested_at)));
+    box.hidden = !list.length;
+    const chip = (a) => a.status === "added" ? `<span class="chip ok">Added</span>` : a.status === "failed" ? `<span class="chip bad">Could not add</span>` : `<span class="chip">Waiting for data</span>`;
+    box.innerHTML = `<h3>Your additions</h3>` + list.map((a) => `<div class="addrow"><span class="n">${esc(a.name)}<small>${esc(a.status === "failed" ? a.reason || "Check the ticker and try again." : a.status === "added" ? a.ticker + " is live for everyone" : a.ticker + ", market data and profile follow at the next update")}</small></span>${chip(a)}<button class="linkbtn" type="button" data-del="${esc(a.id)}">${a.status === "added" ? "Clear" : "Remove"}</button></div>`).join("");
+  }
+  $("adds").addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-del]"); if (!b || !addCol) return;
+    b.disabled = true;
+    try { await addCol.doc(b.dataset.del).delete(); } catch (err) { b.disabled = false; }
+  });
+
+  function openAdd() {
+    const secs = [...new Set(rows.map((r) => r.sector))].sort();
+    $("a-sector").innerHTML = `<option value="">Choose a sector</option>` + secs.map((x) => `<option>${esc(x)}</option>`).join("") + `<option value="__new">New sector\u2026</option>`;
+    $("a-cities").innerHTML = [...new Set(rows.map((r) => r.hq_city).filter(Boolean))].sort().map((c) => `<option value="${esc(c)}"></option>`).join("");
+    $("addform").reset(); $("a-err").hidden = true; $("a-newsec-w").hidden = true;
+    $("a-year").value = new Date().getFullYear();
+    $("adddlg").showModal(); $("a-name").focus();
+  }
+  $("addbtn").addEventListener("click", openAdd);
+  $("a-cancel").addEventListener("click", () => $("adddlg").close());
+  $("a-sector").addEventListener("change", (e) => { $("a-newsec-w").hidden = e.target.value !== "__new"; });
+  const optNum = (id) => { const v = $(id).value.replace(/,/g, "").trim(); if (!v) return null; const n = Number(v); return Number.isFinite(n) ? n : NaN; };
+  $("addform").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fail = (m) => { $("a-err").textContent = m; $("a-err").hidden = false; };
+    const name = $("a-name").value.trim(), ticker = $("a-ticker").value.trim().toUpperCase(), exchange = $("a-exchange").value;
+    const sector = $("a-sector").value === "__new" ? $("a-newsec").value.trim() : $("a-sector").value;
+    const year = Number($("a-year").value);
+    if (name.length < 2) return fail("Enter the company name.");
+    if (!TICKER.test(ticker)) return fail("That ticker doesn't look right. Use the Yahoo Finance form, such as EXAMPLE.NS.");
+    if (exchange === "Nasdaq" ? /\.(NS|BO)$/.test(ticker) : !/\.(NS|BO)$/.test(ticker)) return fail(exchange === "Nasdaq" ? "Nasdaq tickers have no .NS or .BO ending." : "Indian tickers end in .NS or .BO.");
+    if (!sector) return fail("Choose a sector.");
+    if (!Number.isInteger(year) || year < 1990 || year > new Date().getFullYear()) return fail("Enter a valid listing year.");
+    if (rows.some((r) => r.ticker === ticker) || adds.some((a) => a.ticker === ticker && a.status !== "failed")) return fail(`${ticker} is already in the tracker or waiting to be added.`);
+    if (published.some((r) => r.name.toLowerCase() === name.toLowerCase())) return fail(`${name} is already in the tracker.`);
+    const nums = { debut_mcap: optNum("a-debut"), listing_price: optNum("a-lp"), sales: optNum("a-sales"), sales_yoy: optNum("a-yoy"), net_profit: optNum("a-np") };
+    if (Object.values(nums).some(Number.isNaN)) return fail("The optional figures must be numbers.");
+    const doc = { name, ticker, exchange, sector, listing_year: year, hq_city: $("a-city").value.trim(), aliases: $("a-aliases").value.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 6),
+      status: "pending", requested_at: new Date().toISOString() };
+    Object.entries(nums).forEach(([k, v]) => { if (v !== null) doc[k] = v; });
+    $("a-save").disabled = true;
+    try {
+      await addCol.doc(ticker.replace(/[^A-Z0-9._-]/g, "_")).set(doc);
+      $("adddlg").close();
+    } catch (err) {
+      fail(err && err.code === "permission_denied" ? "Your access doesn't allow adding companies. Ask the owner for edit access." : "The company wasn't saved. Try again.");
+    } finally { $("a-save").disabled = false; }
+  });
+
+  (async () => {
+    const c = window.claude;
+    if (!c || !c.use || WIDGET) return;
+    const [user, db] = await Promise.all([c.use("user"), c.use("db")]);
+    if (!user || !db || !(await user.canEdit())) return;
+    addCol = db.collection("additions");
+    $("addbtn").hidden = false;
+    addCol.onSnapshot((snap) => { adds = snap.docs.map((d) => Object.assign({}, d.data(), { id: d.id })); mergeAdds(); }, () => {});
+  })();
+
+  // The latest USD/INR, and on the artifact the latest quotes, held where a profile opened from the table can read them at once
+  (async () => {
+    const c = window.claude;
+    const db = c && c.use ? await c.use("db") : null;
+    if (db) {
+      db.doc("live/quotes").onSnapshot((s) => {
+        if (!s.exists) return;
+        const d = s.data();
+        setFx(d.fx, d.updated);
+        try { localStorage.setItem("inc42:tracker:live", JSON.stringify(d)); } catch (e) { /* not stored */ }
+      }, () => {});
+      return;
+    }
+    try {
+      const r = await fetch(`data/live/fx.json?t=${Math.floor(Date.now() / 300000)}`, { cache: "no-cache" });
+      if (r.ok) { const d = await r.json(); setFx(d.usd_inr, d.updated); }
+    } catch (e) { /* the saved rate stays */ }
+  })();
+
+  // ---------- time to IPO (editorial) ----------
+  const E = M.editorial || {};
+  if (E.median_years_to_ipo) {
+    const mx = Math.ceil(Math.max(E.median_years_to_ipo, E.median_years_to_unicorn || 0) / 2) * 2;
+    $("tm-bars").innerHTML = [["Unicorn status", E.median_years_to_unicorn, true], ["IPO listing", E.median_years_to_ipo, false]].filter((x) => x[1]).map(([l, v, soft]) =>
+      `<div class="hb ${soft ? "soft" : ""}"><div class="row"><span>${l}</span><b>${v} years</b></div><div class="track"><i style="width:${(v / mx * 100).toFixed(1)}%"></i></div></div>`).join("");
+    $("h-tm").textContent = `Indian startups take ${E.median_years_to_ipo} years from founding to IPO`;
+    $("tm-note").textContent = (E.median_years_to_unicorn ? `That is ${E.median_years_to_ipo - E.median_years_to_unicorn} years more than it takes to become a unicorn. ` : "") + (E.years_note || "");
+  } else { $("time").hidden = true; }
+
+  // ---------- about ----------
+  $("links").innerHTML = `<a href="${esc(M.article_url)}" target="_blank" rel="noopener">Read the Inc42 analysis</a><a href="${esc(M.methodology_url)}" target="_blank" rel="noopener">Methodology</a>`;
+
+  // ---------- embed mode and deep links ----------
+  const w = WIDGET;
+  if (w && document.querySelector(`[data-widget="${CSS.escape(w)}"]`)) {
+    document.body.classList.add("embed");
+    $("pagehead").hidden = true;
+    document.querySelectorAll("[data-widget]").forEach((s) => { s.hidden = s.dataset.widget !== w; });
+    document.querySelectorAll(".duo").forEach((d) => { if (![...d.children].some((c) => !c.hidden)) d.hidden = true; else d.style.gridTemplateColumns = "minmax(0,1fr)"; });
+  } else if (location.hash && /^#[A-Za-z0-9._~-]+$/.test(location.hash)) {
+    const t = document.getElementById(location.hash.slice(1)); if (t) setTimeout(() => t.scrollIntoView(), 50);
+  }
+  // Let an embedding page size its iframe. The body's own height, because the document's can't go below the frame's,
+  // and a frame could then grow but never shrink after a filter
+  if (parent !== window) {
+    let last = 0;
+    const post = () => {
+      const h = Math.ceil(document.body.getBoundingClientRect().height);
+      if (!h || h === last) return;
+      last = h;
+      parent.postMessage({ type: "inc42-tracker-height", widget: w || "all", height: h }, "*");
+      parent.postMessage({ sentinel: "amp", type: "embed-size", height: h }, "*");     // an AMP article's amp-iframe
+    };
+    new ResizeObserver(post).observe(document.body);
+    window.addEventListener("load", post);
+    parent.postMessage({ type: "inc42-tracker-page", page: "table" }, "*");
+    post();
+  }
+}
+
+// ---------- theme toggle ----------
+function themeButton() {
+  const b = $("themebtn"), root = document.documentElement, mq = matchMedia("(prefers-color-scheme: dark)");
+  const cur = () => root.getAttribute("data-theme") || (mq.matches ? "dark" : "light");
+  const sun = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  const moon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+  const paint = () => { const d = cur() === "dark"; b.innerHTML = d ? sun : moon; b.setAttribute("aria-label", d ? "Switch to light theme" : "Switch to dark theme"); };
+  b.addEventListener("click", () => { const n = cur() === "dark" ? "light" : "dark"; root.setAttribute("data-theme", n); try { localStorage.setItem("lt-theme", n); } catch (e) {} paint(); });
+  mq.addEventListener ? mq.addEventListener("change", paint) : mq.addListener(paint);
+  paint();
+}
+
+themeButton();
+if (window.TRACKER) start(window.TRACKER);
+else fetch("data/tracker.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(start).catch(() => {
+  $("app").insertAdjacentHTML("beforeend", '<p class="foot">The tracker data could not be loaded. Reload the page to try again.</p>');
+});
+})();
+</script>

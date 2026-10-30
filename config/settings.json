@@ -1,0 +1,22 @@
+{
+  "title": "Indian Listed New-Age Tech Company Tracker",
+  "publisher": "Inc42 Datalabs",
+  "article_url": "https://inc42.com/features/indian-listed-new-age-tech-company-tracker-market-cap-revenue-more/",
+  "methodology_url": "https://issuu.com/inc42/docs/inc42_s_listed_new_age_tech_company_tracker",
+  "refresh_schedule": "Every Saturday, 8:00 AM IST",
+  "financials_label": "FY26",
+  "editorial_facts": {
+    "median_years_to_unicorn": 7,
+    "median_years_to_ipo": 11,
+    "years_note": "Median years from founding, for startups listed on Indian exchanges. Inc42 analysis."
+  },
+  "footnotes": [
+    "Source: Inc42 analysis, Yahoo Finance market data.",
+    "Market data refreshes every Saturday at 8:00 AM IST with the previous session's closing prices.",
+    "* Current Market Cap: closing price × total shares outstanding from the latest shareholding filing, adjusted for later splits and bonuses.",
+    "** Debut Market Cap: market capitalisation on the stock's first trading day, from Inc42's records.",
+    "*** Listing Price: the opening price on the first trading day, adjusted for later splits, bonuses and consolidations so it compares directly with today's price.",
+    "Sales and Net Profit are FY26 (April 2025 to March 2026). For the Nasdaq-listed MakeMyTrip and Freshworks they are trailing twelve months, in USD.",
+    "USD and INR amounts convert at the latest USD/INR rate, fetched automatically. Numbers are rounded."
+  ]
+}

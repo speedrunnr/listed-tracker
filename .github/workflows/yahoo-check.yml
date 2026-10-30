@@ -1,0 +1,41 @@
+name: Yahoo Finance access check
+
+# Run this once by hand (Actions → Yahoo Finance access check → Run workflow) before relying on the refresh. Yahoo
+# sometimes limits requests from cloud servers; this shows whether GitHub's runners get what the tracker needs,
+# including the small SME listings and the USD/INR rate.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Download a sample of prices
+        run: |
+          python - <<'EOF'
+          import csv, sys
+          import yfinance as yf
+          rows = list(csv.DictReader(open("config/companies.csv")))
+          sme = [r["ticker"] for r in rows if "SME" in r["exchange"]][:3]
+          usd = [r["ticker"] for r in rows if r["currency"] == "USD"]
+          ok = True
+          for t in ["ETERNAL.NS", "PAYTM.NS", *sme, *usd, "USDINR=X"]:
+              d = yf.Ticker(t).history(period="5d", interval="1d")
+              print(f"{t:18} daily rows: {len(d):3}")
+              ok &= len(d) > 0
+          if not ok:
+              print("Yahoo returned nothing for at least one symbol from this runner.")
+              sys.exit(1)
+          print("Yahoo access works from GitHub Actions.")
+          EOF

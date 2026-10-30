@@ -1,0 +1,31 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.tmp
+
+# Built on every run
+/public/
+/artifact/*.html
+/artifact/publish_files.json
+/data/live_quotes.json
+/data/live_read/
+/data/qa_report.txt
+/data/pending_additions.json
+/data/additions_result.json
+/data/weekly.lock
+
+# Working files that stay on the Inc42 side: the sheet review, the layout mock and the one-off migration
+/config/corrections.csv
+/config/inc42_sheet_*.csv
+/build_config.py
+/build_mock.py
+/mock/
+
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Left by a workflow step
+*.log

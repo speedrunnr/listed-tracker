@@ -1,0 +1,149 @@
+/* Shared design tokens and finishing layer for the tracker page and the company profiles.
+   Light and dark are each tuned for their own surface. */
+
+:root {
+  --bg: #ffffff;
+  --surface: #fff6f6;            /* quiet fills: segmented tracks, chips, metric tiles */
+  --card: #ffffff;               /* the chart card and insight cards */
+  --card-line: #e8e2dd;
+  --card-shadow: none;
+  --raised: #ffffff;             /* menus, tooltips, popovers */
+  --ink: #030303;
+  --ink-2: #333333;
+  --muted: #666666;
+  --hair: #f0eae6;
+  --hair-strong: #ddd3cd;
+  --wash: rgba(214, 50, 46, 0.07);
+  --up: #0a7a3d;
+  --up-line: #16a34a;
+  --up-fill: rgba(22, 163, 74, 0.16);
+  --down: #c4201b;
+  --down-line: #e23b3b;
+  --down-fill: rgba(226, 59, 59, 0.14);
+  --brand: #d6322e;
+  --focus: #5546ff;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --bar: linear-gradient(90deg, #d81757 0%, #e4381b 100%);
+  --shadow: 0 10px 28px rgba(3, 3, 3, 0.12), 0 2px 6px rgba(3, 3, 3, 0.05);
+  --font: "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r-card: 8px;
+  --r-ctl: 6px;
+  --link: #d6322e;
+  --brand-grad: linear-gradient(90deg, #d81757 0%, #d8341a 100%);   /* the Inc42 nav bar, its orange end deepened to carry white text */
+  --tile: #fff6f6;               /* the tint of the article's Summary box */
+  --kpi-val: #d6322e;
+  --eyebrow: #d6322e;
+  --head-bg: #fff6f6;
+  --head-rule: #030303;
+  --row-hover: #fff6f6;
+  --on: #030303;                 /* the selected control */
+  --on-ink: #ffffff;
+  --on-ring: transparent;
+  --cta: linear-gradient(90deg, #d81757 0%, #d8341a 100%);
+  --cta-ink: #ffffff;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* heatmap steps: neutral, then 0.1–1%, 1–2%, 2–3%, 3%+ either way; steps 3 and 4 carry --heat-hi text */
+  --heat-n: #e7eaee;
+  --heat-u1: #d3ebd9; --heat-u2: #92cca2; --heat-u3: #2a8547; --heat-u4: #137333;
+  --heat-d1: #f7d6d3; --heat-d2: #eda099; --heat-d3: #c93b32; --heat-d4: #a51d1a;
+  --heat-lo: #0e1116; --heat-hi: #ffffff;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111316; --surface: #1b1e22; --card: #1b1e22; --card-line: #1b1e22; --card-shadow: none; --raised: #23272c;
+    --ink: #eceef0; --ink-2: #b9bdc3; --muted: #8b9097; --hair: #2b2f35; --hair-strong: #3a3f46; --wash: rgba(236, 238, 240, 0.07);
+    --up: #81c995; --up-line: #81c995; --up-fill: rgba(129, 201, 149, 0.24);
+    --down: #f28b82; --down-line: #f28b82; --down-fill: rgba(242, 139, 130, 0.22);
+    --brand: #ff4d6a; --focus: #6ea8f0;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --bar: #3987e5;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --link: #6ea8f0; --tile: #1b1e22; --kpi-val: #eceef0; --eyebrow: #8b9097; --head-bg: #1b1e22; --head-rule: #3a3f46; --row-hover: #23272c; --on: #23272c; --on-ink: #eceef0; --on-ring: #2b2f35; --cta: #eceef0; --cta-ink: #111316;
+    --heat-n: #2b2f35;
+    --heat-u1: #1e3326; --heat-u2: #1f4d2e; --heat-u3: #1d6233; --heat-u4: #1f7a3b;
+    --heat-d1: #3d2523; --heat-d2: #5e2a26; --heat-d3: #84302a; --heat-d4: #a8332b;
+    --heat-lo: #eceef0; --heat-hi: #eceef0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111316; --surface: #1b1e22; --card: #1b1e22; --card-line: #1b1e22; --card-shadow: none; --raised: #23272c;
+  --ink: #eceef0; --ink-2: #b9bdc3; --muted: #8b9097; --hair: #2b2f35; --hair-strong: #3a3f46; --wash: rgba(236, 238, 240, 0.07);
+  --up: #81c995; --up-line: #81c995; --up-fill: rgba(129, 201, 149, 0.24);
+  --down: #f28b82; --down-line: #f28b82; --down-fill: rgba(242, 139, 130, 0.22);
+  --brand: #ff4d6a; --focus: #6ea8f0;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --bar: #3987e5;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    --link: #6ea8f0; --tile: #1b1e22; --kpi-val: #eceef0; --eyebrow: #8b9097; --head-bg: #1b1e22; --head-rule: #3a3f46; --row-hover: #23272c; --on: #23272c; --on-ink: #eceef0; --on-ring: #2b2f35; --cta: #eceef0; --cta-ink: #111316;
+  --heat-n: #2b2f35;
+  --heat-u1: #1e3326; --heat-u2: #1f4d2e; --heat-u3: #1d6233; --heat-u4: #1f7a3b;
+  --heat-d1: #3d2523; --heat-d2: #5e2a26; --heat-d3: #84302a; --heat-d4: #a8332b;
+  --heat-lo: #eceef0; --heat-hi: #eceef0;
+  color-scheme: dark;
+}
+
+/* ---------- base ---------- */
+body { font-feature-settings: "tnum" 0, "cv11" 1; text-rendering: optimizeLegibility; }
+::selection { background: color-mix(in srgb, var(--focus) 24%, transparent); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+button, a, .ht { -webkit-tap-highlight-color: transparent; }
+button { transition: background-color 0.15s var(--ease), color 0.15s var(--ease), box-shadow 0.15s var(--ease), border-color 0.15s var(--ease); }
+
+/* ---------- quote header ---------- */
+.last { font-weight: 650; letter-spacing: -0.025em; }
+.chg { padding: 3px 12px 3px 4px; border-radius: var(--r-ctl); gap: 7px; }
+.chg.up { background: var(--up-fill); } .chg.down { background: var(--down-fill); }
+.chg .dot { width: 22px; height: 22px; }
+.stamp .live::before { box-shadow: 0 0 0 0 color-mix(in srgb, var(--up-line) 55%, transparent); animation: ui-pulse 2s var(--ease) infinite; }
+@keyframes ui-pulse { 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* ---------- chart card ---------- */
+.card { background: var(--card); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); border-radius: var(--r-card); padding: 8px; }
+.plot { background: var(--card); }
+.pcl { background: var(--card); }
+.tip, .ctip, .heattip, .infopop, .pop { border: 1px solid var(--card-line); }
+/* range picker as one segmented control */
+.ranges { background: var(--surface); border-radius: var(--r-card); padding: 4px; margin: 2px 6px 6px; gap: 2px; }
+.ranges button { height: 36px; border-radius: var(--r-ctl); }
+.ranges button[aria-pressed="true"] { background: var(--on); color: var(--on-ink); box-shadow: 0 0 0 1px var(--on-ring); }
+.seg { background: var(--surface); }
+.seg button[aria-pressed="true"] { background: var(--on); color: var(--on-ink); box-shadow: 0 0 0 1px var(--on-ring); }
+.chip { background: var(--surface); border-color: transparent; }
+/* loading: a shimmer block instead of a line of text */
+.loading { margin: 10px; border-radius: var(--r-ctl); color: transparent;
+  background: linear-gradient(100deg, var(--surface) 30%, var(--wash) 50%, var(--surface) 70%); background-size: 300% 100%;
+  animation: ui-shimmer 1.3s linear infinite; }
+@keyframes ui-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+/* ---------- tabs and sections ---------- */
+.tabs { border-bottom-color: var(--hair); }
+.tabs button { transition: color 0.15s var(--ease); }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { font-weight: 600; }
+.tabs button[aria-selected="true"]::after { height: 3px; animation: ui-tab 0.25s var(--ease); }
+@keyframes ui-tab { from { transform: scaleX(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+.panel:not([hidden]) { animation: ui-in 0.22s var(--ease); }
+@keyframes ui-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.ins-card { background: var(--card); border: 1px solid var(--card-line); box-shadow: var(--card-shadow); border-radius: var(--r-card); }
+.risk div { background: var(--surface); border-radius: var(--r-card); }
+.stat { border-bottom-color: var(--hair); }
+footer { border-top-color: var(--hair); }
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp .live::before, .loading, .panel:not([hidden]), .tabs button[aria-selected="true"]::after { animation: none; }
+}
+
+/* four tabs on a phone: share the row instead of scrolling it */
+@media (max-width: 420px) {
+  .tabs { gap: 0; }
+  .tabs button { flex: 1 1 auto; padding: 12px 6px 11px; font-size: 14.5px; }
+}
+@media (max-width: 359px) { .tabs button { padding-inline: 4px; font-size: 13.5px; } }
+
+/* phones: the range picker keeps all eight ranges inside the card; the compare list centres on the card */
+@media (max-width: 640px) {
+  .ranges { gap: 0; padding: 3px; margin-inline: 2px; }
+  .ranges button { padding: 0 6px; }
+  .pop.cmp { left: 50%; transform: translateX(-50%); }
+}
+@media (max-width: 359px) { .ranges button { padding: 0 4px; } }
