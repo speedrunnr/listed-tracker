@@ -96,6 +96,9 @@ a { color: var(--link); text-underline-offset: 3px; }
 .embed .card { background: none; border: 0; padding: 0; --pad: 0px; }
 .embed .brow { margin-inline: 0; padding-inline: 0; width: 100%; }
 .embed .brow:hover, .embed .brow[aria-pressed="true"] { box-shadow: none; background: none; }
+/* In an article the table's title stays quiet: the story's own headline sits above it */
+.embed #table .eyebrow { display: none; }
+.embed #h-tb { font-size: 16px; font-weight: 600; color: var(--ink-2); }
 
 /* ---------- page header ---------- */
 .head { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: start; }
@@ -781,6 +784,7 @@ function start(D) {
   if (w && document.querySelector(`[data-widget="${CSS.escape(w)}"]`)) {
     document.body.classList.add("embed");
     $("pagehead").hidden = true;
+    if (w === "table") $("h-tb").textContent = M.title;
     document.querySelectorAll("[data-widget]").forEach((s) => { s.hidden = s.dataset.widget !== w; });
     document.querySelectorAll(".duo").forEach((d) => { if (![...d.children].some((c) => !c.hidden)) d.hidden = true; else d.style.gridTemplateColumns = "minmax(0,1fr)"; });
   } else if (location.hash && /^#[A-Za-z0-9._~-]+$/.test(location.hash)) {
