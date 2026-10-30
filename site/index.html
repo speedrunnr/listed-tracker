@@ -394,6 +394,8 @@ const params = new URLSearchParams(location.search);
 // the single widget this page shows: from the URL, or built in on the public site
 const WIDGET = params.get("widget") || document.documentElement.dataset.widget || null;
 const VIEW_KEY = "inc42:tracker:view";
+// Inside AMP no script on the article can bring a profile into view after the frame resizes, so profiles get their own tab
+const NEW_TAB = /(^|[#&])amp=1/.test(location.hash);
 
 function start(D) {
   const M = D.meta;
@@ -473,7 +475,7 @@ function start(D) {
   // ---------- table ----------
   const fl = M.financials_label;
   const COLS = [
-    { k: "name", l: "Company", s: (r) => r.name.toLowerCase(), v: (r) => `${r.profile ? `<a class="co" href="${esc(profileHref(r))}">${esc(r.name)}</a>` : esc(r.name)}<small>${r.pending ? `<span class="pend">Waiting for data</span>` : esc(r.hq_city || "")}</small>` },
+    { k: "name", l: "Company", s: (r) => r.name.toLowerCase(), v: (r) => `${r.profile ? `<a class="co" href="${esc(profileHref(r))}"${NEW_TAB ? ' target="_blank" rel="noopener"' : ""}>${esc(r.name)}</a>` : esc(r.name)}<small>${r.pending ? `<span class="pend">Waiting for data</span>` : esc(r.hq_city || "")}</small>` },
     { k: "sector", l: "Sector", s: (r) => r.sector, v: (r) => esc(r.sector) },
     { k: "exchange", l: "Listed On", s: (r) => r.exchange, v: (r) => esc(r.exchange) },
     { k: "listing_year", l: "Listing Year", r: 1, s: (r) => r.listing_year, v: (r) => r.listing_year },
@@ -497,7 +499,7 @@ function start(D) {
     if (v && COLS.some((c) => c.k === v.sort)) { backX = v.x || 0; delete v.x; Object.assign(st, v); $("q").value = st.q; }
   } catch (e) { /* nothing remembered */ }
   $("tbody").addEventListener("click", (e) => {
-    if (!e.target.closest("a.co")) return;
+    if (NEW_TAB || !e.target.closest("a.co")) return;
     try { sessionStorage.setItem(VIEW_KEY, JSON.stringify(Object.assign({}, st, { x: document.querySelector(".tablewrap").scrollLeft }))); } catch (err) { /* not remembered */ }
   });
 

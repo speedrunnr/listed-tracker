@@ -110,7 +110,8 @@ Paste `embed/wordpress-embed.html` into a Custom HTML block. Use `embed/amp-embe
   company column fixed.
 - A small script sizes the frame to the table, including when a filter shortens it. It needs an editor or administrator account.
   Without it the table still works, at a fixed height with its own scrollbar.
-- Profiles open inside the frame. The back link returns to the table with the reader's filters, sort and scroll in place.
+- Profiles open inside the frame. The back link returns to the table with the reader's filters, sort and scroll in place. In AMP
+  they open in a new tab, because AMP allows no script to bring them into view.
 - inc42.com sets no `frame-src` rule today, so the frame is allowed. If one is added, it must include
   `https://speedrunnr.github.io`.
 - Recommended: a DNS CNAME such as `tracker.inc42.com` → `speedrunnr.github.io`, then Settings → Pages → Custom domain. Articles

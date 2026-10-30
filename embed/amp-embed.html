@@ -3,9 +3,10 @@
   Needs the amp-iframe component in the page <head> (most AMP setups include it already):
     <script async custom-element="amp-iframe" src="https://cdn.ampproject.org/v0/amp-iframe-0.1.js"></script>
 
-  The widget posts AMP's "embed-size" message, so with `resizable` the frame grows to fit after the reader interacts
-  with it. AMP only resizes on interaction, so the "Show the full table" bar stays until then. AMP requires the frame
-  to be at least 600px from the top of the page or carry a placeholder: the placeholder below covers that.
+  The widget posts AMP's "embed-size" message, so with `resizable` the frame follows the table's height. AMP resizes a
+  frame on screen only after the reader interacts with it, and shows the "Show the full table" bar if it has to wait.
+  Profiles open in a new tab here, because AMP allows no script to bring them into view inside the frame. AMP requires
+  the frame to be at least 600px from the top of the page or carry a placeholder: the placeholder below covers that.
 -->
 <amp-iframe
   src="https://speedrunnr.github.io/listed-tracker/"
