@@ -377,7 +377,10 @@ function withLive(L) {
   co.daily = byKey(co.daily, (r) => r[0], q.days.map((r) => r.slice()));
   co.sessions = byKey(co.sessions, (x) => x.date, q.s.map(liveSession));
   co.price = q.p; co.session_date = q.d;
-  if (q.pc != null) co.prev_close = q.pc;
+  // Each previous close comes from the merged history, because Yahoo can answer a recent listing with its last bar alone
+  const closeBefore = (date) => { const i = co.daily.findIndex((r) => r[0] === date); return i > 0 ? co.daily[i - 1][4] : null; };
+  co.prev_close = closeBefore(q.d) ?? q.pc ?? co.prev_close;
+  for (const x of co.sessions) x.prev_close = x.prev_close ?? closeBefore(x.date);
   if (T.mcap != null) T.mcap *= move;
   if (T.mcap != null && T.debut_mcap) T.mcap_chg = (T.mcap / T.debut_mcap - 1) * 100;
   if (T.listing_price) T.price_chg = (q.p / T.listing_price - 1) * 100;

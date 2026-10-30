@@ -14,7 +14,7 @@
     "Source: Inc42 analysis, Yahoo Finance market data.",
     "Market data refreshes every Saturday at 8:00 AM IST with the previous session's closing prices.",
     "* Current Market Cap: closing price × total shares outstanding from the latest shareholding filing, adjusted for later splits and bonuses.",
-    "** Debut Market Cap: market capitalisation on the stock's first trading day, from Inc42's records.",
+    "** Debut Market Cap: market capitalisation on the stock's first trading day (listing price × shares), from Inc42's records or, where those are unavailable, calculated.",
     "*** Listing Price: the opening price on the first trading day, adjusted for later splits, bonuses and consolidations so it compares directly with today's price.",
     "Sales and Net Profit are FY26 (April 2025 to March 2026). For the Nasdaq-listed MakeMyTrip and Freshworks they are trailing twelve months, in USD.",
     "USD and INR amounts convert at the latest USD/INR rate, fetched automatically. Numbers are rounded."

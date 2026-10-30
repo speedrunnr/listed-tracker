@@ -112,7 +112,7 @@ def build_row(doc, existing):
     if listing_price is None and is_listing: listing_price = round(float(h["Open"].iloc[0]), 2)
     debut = number(doc.get("debut_mcap"))
     div = 1e6 if currency == "USD" else 1e7
-    if debut is None and is_listing and shares: debut = round(float(h["Close"].iloc[0]) * shares / div)
+    if debut is None and listing_price and shares: debut = round(listing_price * shares / div)      # how Inc42's own figures work
     # the owner's figures win; Yahoo fills the rest
     pick = lambda key, val: val if number(doc.get(key)) is None else number(doc.get(key))
     sales, yoy, np_ = statement(t, currency)

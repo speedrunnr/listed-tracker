@@ -121,10 +121,12 @@ def build(rows: list, previous: dict, daily: pd.DataFrame, bars: pd.DataFrame, o
     for r in rows:
         pid, ticker = profile_id(r["ticker"]), r["ticker"]
         days = daily_bars(daily, ticker)
+        # Yahoo can answer a recent listing with its last bar alone, so the last run's price is the other reference
+        ref = days[-2][4] if len(days) > 1 else previous.get(pid, {}).get("p")
         if not days:
             skipped.append(f"{r['name']}: no price")
-        elif len(days) > 1 and abs(days[-1][4] / days[-2][4] - 1) > MAX_MOVE:
-            skipped.append(f"{r['name']}: {days[-2][4]} to {days[-1][4]} looks like a bad tick")
+        elif ref and abs(days[-1][4] / ref - 1) > MAX_MOVE:
+            skipped.append(f"{r['name']}: {ref} to {days[-1][4]} looks like a bad tick")
         else:
             q[pid] = {"p": days[-1][4], "pc": days[-2][4] if len(days) > 1 else None, "d": days[-1][0],
                       "days": days[-DAYS:], "s": intraday_sessions(bars, ticker, days, older_s)}

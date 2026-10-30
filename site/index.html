@@ -403,6 +403,7 @@ function start(D) {
   const isUSD = (r) => r.currency === "USD";
   const toCr = (r, v) => (v == null ? null : isUSD(r) ? v * FX / 10 : v);       // USD Mn -> INR Cr
   const crToUsdBn = (cr) => cr / (FX * 100);
+  const toInr = (r, v) => (v == null ? null : isUSD(r) ? v * FX : v);           // per-share prices, so sorting compares like with like
   const segOf = (r) => /nasdaq/i.test(r.exchange) ? "Nasdaq" : /SME/.test(r.exchange) ? "SME" : "Mainboard";
 
   // ---------- formatting ----------
@@ -479,8 +480,8 @@ function start(D) {
     { k: "debut_mcap", l: "Debut Market Cap**", u: "INR Cr / USD", r: 1, s: (r) => toCr(r, r.debut_mcap), v: (r) => money(r, r.debut_mcap) },
     { k: "mcap", l: "Current Market Cap*", u: "INR Cr / USD", r: 1, s: (r) => toCr(r, r.mcap), v: (r) => money(r, r.mcap) },
     { k: "mcap_chg", l: "% Change", u: "since debut", r: 1, pc: 1, s: (r) => r.mcap_chg, v: (r) => pct(r.mcap_chg) },
-    { k: "listing_price", l: "Listing Price***", u: "INR / USD", r: 1, s: (r) => r.listing_price, v: (r) => price(r, r.listing_price) },
-    { k: "price", l: "Current Stock Price", u: "INR / USD", r: 1, s: (r) => r.price, v: (r) => price(r, r.price) + (r.price_date && r.price_date !== M.as_of ? `<span class="sub">${esc(dfmt(r.price_date, { year: undefined }))} close</span>` : "") },
+    { k: "listing_price", l: "Listing Price***", u: "INR / USD", r: 1, s: (r) => toInr(r, r.listing_price), v: (r) => price(r, r.listing_price) },
+    { k: "price", l: "Current Stock Price", u: "INR / USD", r: 1, s: (r) => toInr(r, r.price), v: (r) => price(r, r.price) + (r.price_date && r.price_date !== M.as_of ? `<span class="sub">${esc(dfmt(r.price_date, { year: undefined }))} close</span>` : "") },
     { k: "price_chg", l: "% Change", u: "since listing", r: 1, pc: 1, s: (r) => r.price_chg, v: (r) => pct(r.price_chg) },
     { k: "week_chg", l: "1 Week", u: "price change", r: 1, pc: 1, s: (r) => r.week_chg, v: (r) => pct(r.week_chg) },
     { k: "sales", l: `Sales (${fl})`, u: "INR Cr / USD", r: 1, s: (r) => toCr(r, r.sales), v: (r) => money(r, r.sales) },

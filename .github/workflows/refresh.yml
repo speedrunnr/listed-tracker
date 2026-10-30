@@ -92,6 +92,7 @@ jobs:
             if [ "$(cat data/weekly_done.txt 2>/dev/null)" = "$as_of" ]; then echo "stop=true" >> "$GITHUB_OUTPUT"; fi
           fi
           echo "as_of=$as_of" >> "$GITHUB_OUTPUT"
+          if [ -f data/qa_report.txt ]; then sed 's/$/  /' data/qa_report.txt >> "$GITHUB_STEP_SUMMARY"; fi
           exit "$code"
 
       - name: Rebuild every company profile
@@ -125,7 +126,10 @@ jobs:
       - name: Check the site
         id: check
         if: (steps.table.outputs.stop != 'true' || steps.queue.outputs.added == 'true') && (env.MODE != 'live' || steps.live.outputs.action == 'WRITE' || steps.queue.outputs.added == 'true')
-        run: python check_site.py
+        shell: bash
+        run: |
+          python check_site.py | tee check.log
+          grep '^REVIEW' check.log | sed 's/$/  /' >> "$GITHUB_STEP_SUMMARY" || true
 
       - uses: actions/upload-pages-artifact@v3
         if: steps.check.outcome == 'success'

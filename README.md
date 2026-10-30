@@ -49,6 +49,24 @@ Every step fails safe. `refresh.py` writes nothing if validation fails, `build_p
 Yahoo misses it, and `check_site.py` stops a bad build from replacing a good one. A failed run emails the account that started
 it, and the next run recovers.
 
+## Data checks
+
+`config/companies.csv` always wins: on every build its values replace the saved ones in the table and each profile, and the
+percentages are worked out again, so an edit there can't leave the two out of step.
+
+| Stops a refresh | Stops a deploy (`check_site.py`) | Listed for review on the run's summary page |
+|---|---|---|
+| Under 90% of companies with a close | Any percentage that doesn't match its recalculation | A week's move above 40% with no split |
+| The market date going backwards | Table, config and profile disagreeing | Figures that match last year's statement, not this year's |
+| Combined market cap moving over 25% in a run | A company twice, dropped, or with the wrong ticker, currency or profile | A company with no price from Yahoo, which keeps its last figures |
+| No USD/INR rate from Yahoo or saved | A zero or negative price, market cap or sales figure | Blank debut cap, listing price, sales or profit |
+| | Stale or unusable USD/INR, or a stale close | |
+
+Yahoo's own market cap is not used for Indian listings: for thin NSE SME names it can rest on a price frozen years ago. Market cap
+is always latest close × shares. Yahoo's is used for Nasdaq names, and is replaced by last week's at this week's price if it
+moves more than 15% from that. The plain `.NS` feed of an NSE SME listing can lag, so its `-SM.NS` bar wins when it is as new or
+newer.
+
 ## Going live
 
 1. **Create the repository.** A public repository named `listed-tracker`, then push this folder:
@@ -152,11 +170,11 @@ close, so existing rows stay as they were. On a weekday, adding a company moves 
 | Field | Where it comes from if left blank |
 |---|---|
 | Sales, YoY, net profit | Yahoo's latest annual statement. Can be blank or differ from Inc42's figures |
-| Debut market cap | Yahoo's first-day close × today's shares |
+| Debut market cap | Listing price × today's shares |
 | Listing price | Yahoo's first-day open. Blank for symbols with only recent history, such as NSE SME |
 | Shares | Yahoo, not the NSE filing |
 
-Enter the figures you trust in the form, or correct `config/companies.csv` afterwards and run *Refresh and deploy* in `weekly`
+Enter the figures you trust in the form, or correct `config/companies.csv` afterwards and run *Refresh and deploy* in `deploy`
 mode. If Yahoo rejects a ticker, the others still go through, the run turns red, and the reason is on its summary page.
 
 ## Running it locally
@@ -194,7 +212,7 @@ ever mean gains and losses.
 
 - **A run failed:** Actions shows the log. Most failures are Yahoo hiccups and the next run recovers.
 - **The token expires:** create a new one and update all three cron-job.org jobs before it does.
-- **Changed the code or settings:** run *Refresh and deploy* in `deploy` mode.
+- **Changed the code, settings or company data:** run *Refresh and deploy* in `deploy` mode. It needs no download.
 - **Yahoo blocks GitHub:** run the build on a computer you control, commit the results, and let GitHub only host the files.
 - **Limits:** GitHub Pages has a soft bandwidth limit of about 100 GB a month. A table view is about 100 KB and a profile about
   50 KB, which covers about a million views.
