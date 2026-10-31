@@ -92,8 +92,14 @@ a { color: var(--link); text-underline-offset: 3px; }
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   display: grid; gap: 20px; }
 /* In an article the widget has no frame of its own: the page's column is the frame */
-.embed .wrap { padding-block: 4px 8px; padding-inline: 2px; gap: 12px; }
+.embed .wrap { padding-block: 4px 8px; padding-inline: 0; gap: 12px; }
 .embed .card { background: none; border: 0; padding: 0; --pad: 0px; }
+.embed :focus-visible { outline-offset: -2px; }
+.embed .filters select { flex: 1 1 180px; }
+/* Sector names and column titles wrap, so the market cap columns fit inside the article's reading column */
+.embed td:nth-child(2) { white-space: normal; min-width: 110px; max-width: 140px; }
+.embed th { white-space: normal; }
+.embed th .u { white-space: nowrap; }
 .embed .brow { margin-inline: 0; padding-inline: 0; width: 100%; }
 .embed .brow:hover, .embed .brow[aria-pressed="true"] { box-shadow: none; background: none; }
 /* In an article the table's title stays quiet: the story's own headline sits above it */
@@ -309,7 +315,7 @@ dialog::backdrop { background: rgba(10, 12, 16, 0.5); }
       <button class="addbtn" id="addbtn" type="button" hidden>Add company</button>
     </div>
     <div class="adds" id="adds" hidden></div>
-    <div class="countline"><span id="count"></span><button class="clear" id="clear" type="button" hidden>Clear filters</button></div>
+    <div class="countline"><span id="count"></span><span id="more" hidden>Scroll sideways for more columns</span><button class="clear" id="clear" type="button" hidden>Clear filters</button></div>
     <div class="tablewrap"><table id="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
     <ul class="notes" id="tnotes"></ul>
   </section>
@@ -781,6 +787,10 @@ function start(D) {
 
   // ---------- about ----------
   $("links").innerHTML = `<a href="${esc(M.article_url)}" target="_blank" rel="noopener">Read the Inc42 analysis</a><a href="${esc(M.methodology_url)}" target="_blank" rel="noopener">Methodology</a>`;
+
+  // Scrollbars stay hidden on many screens, so say so whenever columns run past the edge
+  const tw = document.querySelector(".tablewrap");
+  new ResizeObserver(() => { $("more").hidden = tw.scrollWidth <= tw.clientWidth + 1; }).observe($("tbl"));
 
   // ---------- embed mode and deep links ----------
   const w = WIDGET;
