@@ -107,8 +107,13 @@ Paste `embed/wordpress-embed.html` into the editor's Code tab or a Custom HTML b
 
 - The block fills the reading column (659 to 760px, depending on the screen), so its edges line up with the article text. The
   table scrolls sideways with its company column fixed, and sector names and column titles wrap so the market cap columns fit.
-- A small script sizes the frame to the table, including when a filter shortens it. It needs an editor or administrator account.
-  Without it the table still works, at a fixed height with its own scrollbar.
+- Don't write an iframe tag or inline script in the article. On no-sidebar articles the theme's server code moves an iframe tag
+  out of the column to the full width of the window, whatever its CSS, and splits the article in two. Inc42's app doesn't run
+  scripts and prints their text as words. So the block is a figure and one script tag, and `site/embed.js` builds the frame.
+- The script tag pins `embed.js` with an integrity hash, because it runs on inc42.com. If the file changes, every article needs
+  the new hash from `openssl dgst -sha384 -binary site/embed.js | openssl base64 -A`, or browsers block it and only the link shows.
+- `embed.js` also sizes the frame to the table, including when a filter shortens it. The script tag needs an editor or
+  administrator account. In the app, or without the script, the reader sees only the "Open the tracker" link.
 - Profiles open inside the frame. The back link returns to the table with the reader's filters, sort and scroll in place. In AMP
   they open in a new tab, because AMP allows no script to bring them into view.
 - inc42.com sets no `frame-src` rule today, so the frame is allowed. If one is added, it must include

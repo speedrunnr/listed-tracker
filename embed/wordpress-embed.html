@@ -1,46 +1,14 @@
 <!--
   Inc42 Listed New-Age Tech Company Tracker: the table, for the Code tab of the article editor or a Custom HTML block.
-  It fills the reading column, like the NATI widget, and the table scrolls sideways inside it. The script needs an
-  editor or administrator account. Without it the table still works, at the fallback height below with its own scrollbar.
+  Don't write an iframe tag or any inline script here. On no-sidebar articles the theme's server code moves an iframe tag
+  out of the reading column, and Inc42's app prints script text as words. So site/embed.js builds the frame, and in the app
+  the reader sees only the "Open the tracker" link. The script tag needs an editor or administrator account.
+  The integrity hash pins embed.js. If that file ever changes, every article needs the new hash, or the link is all that shows.
+  To move hosts, change the address in the link and the script tag. The hash stays the same.
 -->
-<style>
-  /* Fallback heights until the widget reports its own (or if this block's script is stripped) */
-  .inc42-tracker-embed { margin: 24px 0; padding: 0; }
-  #inc42-listed-tracker { display: block; width: 100%; height: 5400px; border: 0; }
-  @media (max-width: 640px) { #inc42-listed-tracker { height: 5800px; } }
-</style>
-<figure class="inc42-tracker-embed">
-  <iframe
-    id="inc42-listed-tracker"
-    src="https://speedrunnr.github.io/listed-tracker/"
-    aria-label="Inc42 Listed New-Age Tech Company Tracker: search, filter and sort every listed company"
-    loading="lazy"
-    width="100%"
-    referrerpolicy="strict-origin-when-cross-origin"></iframe>
+<figure id="inc42-listed-tracker-box" style="display:block;width:100%;max-width:100%;margin:24px 0;padding:0;">
   <figcaption style="font-size:13px;line-height:1.4;color:#666;margin-top:8px;">
     Table not loading? <a href="https://speedrunnr.github.io/listed-tracker/" target="_blank" rel="noopener">Open the tracker</a>.
   </figcaption>
 </figure>
-<script>
-  (function () {
-    var frame = document.getElementById("inc42-listed-tracker");
-    if (!frame) return;
-    var origin = new URL(frame.getAttribute("src"), location.href).origin;
-    var pages = 0;
-    var HEADER = 100;   // the site's sticky header
-    window.addEventListener("message", function (e) {
-      if (e.origin !== origin || e.source !== frame.contentWindow) return;
-      var d = e.data;
-      if (!d) return;
-      // The reader moved between the table and a profile inside the frame: bring the top of the new page into view
-      if (d.type === "inc42-tracker-page") {
-        var top = frame.getBoundingClientRect().top;
-        if (pages++ && top < HEADER) window.scrollBy(0, top - HEADER);
-        return;
-      }
-      // The widget reports its content height whenever it changes; the frame follows it
-      if (d.type !== "inc42-tracker-height" || typeof d.height !== "number") return;
-      frame.style.height = Math.max(400, Math.min(12000, Math.round(d.height))) + "px";
-    });
-  })();
-</script>
+<script src="https://speedrunnr.github.io/listed-tracker/embed.js" integrity="sha384-LCkJ+nxHc5CFMzxSYU5KP9fRN1l918W5ZDNXRIztoP0qD9FTUZZUV35zb9XwkxeE" crossorigin="anonymous" defer></script>

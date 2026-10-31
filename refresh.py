@@ -179,9 +179,11 @@ def full_document(page, attrs="", head=""):
 
 def build_public(page, company):
     """public/, what GitHub Pages serves: the table on its own in the light theme, since the article has no dark mode,
-    and the profiles beside it. data/live/ is written by live_quotes.py --publish and left alone here."""
+    and the profiles beside it, plus the article embed's script. data/live/ is written by live_quotes.py --publish and
+    left alone here."""
     robots = '<meta name="robots" content="noindex">\n'
     (PUBLIC / "data").mkdir(parents=True, exist_ok=True)
+    shutil.copy(ROOT / "site/embed.js", PUBLIC / "embed.js")
     (PUBLIC / "index.html").write_text(full_document(page, ' data-theme="light" data-widget="table"', robots))
     (PUBLIC / "company.html").write_text(company.replace('<html lang="en">', '<html lang="en" data-theme="light">', 1)
                                          .replace("<head>\n", "<head>\n" + robots, 1))

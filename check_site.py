@@ -64,6 +64,8 @@ def review(rows, label):
 def problems():
     if not (PUBLIC / "index.html").exists() or not (PUBLIC / "company.html").exists():
         yield "public/ has no pages; run refresh.py --rebuild"; return
+    if not (PUBLIC / "embed.js").exists():
+        yield "public/ has no embed.js, so articles would lose the table"
     page = (PUBLIC / "index.html").read_text()
     profile = (PUBLIC / "company.html").read_text()
     if "/*__TRACKER_DATA__*/" in page or not page.startswith("<!doctype html>"):
