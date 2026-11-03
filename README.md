@@ -98,8 +98,13 @@ newer.
    Each sends these headers: `Accept: application/vnd.github+json`, `Authorization: Bearer YOUR-TOKEN`,
    `X-GitHub-Api-Version: 2022-11-28` and `Content-Type: application/json`. A successful call returns 204.
 
-   The workflow also has its own Saturday 9:00 AM schedule as a backup. If the 8:00 AM run happened, it finds no new data and
-   stops. If the token has expired, the table still updates, late, but profile prices stop.
+   The workflow also has its own Saturday schedule at 9:00 AM, 12 noon and 6:00 PM as a backup. If the 8:00 AM run happened,
+   these find no new data and stop. If the token has expired, the table still updates, late, but profile prices stop.
+
+   Yahoo can post Friday's close hours late for some companies: on 31 Oct 2026 it had none for 32 of 76 at 9:44 AM. The
+   refresh asks again for those one at a time, and lists any still missing on the run's summary page. They show their
+   older close, with its date, until a later Saturday run finds the new one: that run writes only those companies, rebuilds
+   only their profiles, and commits as "Fill late closes".
 
 ## Embedding in an article
 
@@ -187,8 +192,10 @@ mode. If Yahoo rejects a ticker, the others still go through, the run turns red,
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/python refresh.py              # weekly refresh (exit 0 written, 2 validation failed, 3 no new market date)
+.venv/bin/python refresh.py              # weekly refresh (exit 0 written, 2 validation failed, 3 no new market date,
+                                         # 4 late closes filled in; its FILLED line names the profiles to rebuild)
 .venv/bin/python refresh.py --force      # write even if the market date has not moved
+.venv/bin/python refresh.py --as-of 2026-10-30   # ignore later bars, to fill a past week's late closes
 .venv/bin/python refresh.py --rebuild    # rebuild the pages from saved data after editing site/ or settings
 .venv/bin/python live_quotes.py --publish
 .venv/bin/python check_site.py

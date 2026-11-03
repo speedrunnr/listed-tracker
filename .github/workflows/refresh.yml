@@ -7,11 +7,14 @@ name: Refresh and deploy
 # Every run first adds any companies waiting in data/queue/. GitHub keeps only one waiting run per group, so a newer
 # run can replace a waiting one; because each run takes the whole queue, a company is never lost that way.
 # cron-job.org starts live and weekly through the API, because GitHub's own schedule can run hours late or not at all.
-# The schedule below is a backup for Saturday: if the 8:00 AM run happened, this one finds no new data and stops.
+# The schedule below is a backup for Saturday: if the 8:00 AM run happened, these find no new data and stop. Yahoo can
+# post Friday's close hours late for some names, so the later two also fill in any that came in since, and only those.
 
 on:
   schedule:
     - cron: "30 3 * * 6"     # Saturday 09:00 IST
+    - cron: "30 6 * * 6"     # Saturday 12:00 IST
+    - cron: "30 12 * * 6"    # Saturday 18:00 IST
   workflow_dispatch:
     inputs:
       mode:
@@ -81,23 +84,31 @@ jobs:
       - name: Refresh the table
         id: table
         if: env.MODE == 'weekly'
+        shell: bash
         run: |
-          code=0
-          python refresh.py || code=$?
+          set +e
+          python refresh.py | tee refresh.log
+          code=${PIPESTATUS[0]}
+          set -e
           # 2 = validation failed: the site keeps its last good data. 3 = the market date has not moved. That ends the
           # run only if this week's profiles are done, because adding a company earlier in the day moves the date too.
+          # 4 = late closes for the same date came in: only those companies' profiles are rebuilt.
           as_of=$(python -c "import json; print(json.load(open('data/tracker.json'))['meta']['as_of'])")
           if [ "$code" = 3 ]; then
             code=0
             if [ "$(cat data/weekly_done.txt 2>/dev/null)" = "$as_of" ]; then echo "stop=true" >> "$GITHUB_OUTPUT"; fi
           fi
+          if [ "$code" = 4 ]; then
+            code=0
+            echo "filled=$(sed -n 's/^FILLED //p' refresh.log)" >> "$GITHUB_OUTPUT"
+          fi
           echo "as_of=$as_of" >> "$GITHUB_OUTPUT"
           if [ -f data/qa_report.txt ]; then sed 's/$/  /' data/qa_report.txt >> "$GITHUB_STEP_SUMMARY"; fi
           exit "$code"
 
-      - name: Rebuild every company profile
+      - name: Rebuild the company profiles
         if: env.MODE == 'weekly' && steps.table.outputs.stop != 'true'
-        run: python build_profiles.py
+        run: python build_profiles.py ${{ steps.table.outputs.filled && format('--no-news {0}', steps.table.outputs.filled) || '' }}
 
       - name: Build the pages
         if: steps.table.outputs.stop != 'true' || steps.queue.outputs.added == 'true'
@@ -108,7 +119,7 @@ jobs:
         run: |
           echo "${{ steps.table.outputs.as_of }}" > data/weekly_done.txt
           git add data/tracker.json data/history data/weekly_done.txt artifact/data
-          git diff --cached --quiet || git commit -m "Weekly refresh $(date +%F)"
+          git diff --cached --quiet || git commit -m "${{ steps.table.outputs.filled && 'Fill late closes' || 'Weekly refresh' }} $(date +%F)"
           git pull --rebase origin main
           git push
 

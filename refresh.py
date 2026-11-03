@@ -9,9 +9,11 @@ USD/INR from Yahoo Finance, validates, and writes:
   public/                       the same pages as full documents, as GitHub Pages serves them
 
 Exit codes: 0 = written; 2 = validation failed, nothing written; 3 = no new market data since the last run
-(nothing written unless --force).
+(nothing written unless --force); 4 = same market date, but closes that were late last time have come in: only those
+companies are written, and a line "FILLED <id> ..." names them.
 
 Usage: python refresh.py [--force]      (--force writes even when the market date has not moved)
+       python refresh.py --as-of 2026-10-30   (ignore bars after that date, to correct a past week's table)
        python refresh.py --rebuild    (re-inline data/tracker.json after editing site/index.html; no download)
 """
 import csv, json, os, re, shutil, sys, datetime as dt
@@ -26,6 +28,7 @@ CFG, SETTINGS = ROOT / "config/companies.csv", ROOT / "config/settings.json"
 OUT, HIST, QA = ROOT / "data/tracker.json", ROOT / "data/history", ROOT / "data/qa_report.txt"
 TEMPLATE, ARTIFACT = ROOT / "site/index.html", ROOT / "artifact/index.html"
 PROFILES, PUBLIC = ROOT / "artifact/data/companies", ROOT / "public"
+MARKET = ("price", "price_date", "mcap", "week_price", "mcap_chg", "price_chg", "week_chg", "lp_factor", "listing_price", "stale")
 EDITORIAL = ("name", "sector", "exchange", "listing_year", "hq_city", "hq_region", "debut_mcap", "sales", "sales_yoy", "net_profit", "note")
 MIN_FRESH = 0.90          # share of companies that must have a close in the latest market week
 STALE_DAYS = 6            # a close this many calendar days older than the market date is flagged stale
@@ -109,6 +112,24 @@ def fetch(tickers, start, sme=()):
         if len(new) and new.index[-1] >= out[t].index[-1] and abs(new["Close"].iloc[-1] / out[t]["Close"].iloc[-1] - 1) <= MAX_SME_GAP:
             out[t] = pd.concat([out[t][out[t].index < new.index[0]], new])
     return out
+
+
+def catch_up(data, comps, as_of, cap=None):
+    """Yahoo can post a session's daily bar hours late for some names, even the morning after: on Saturday 31 Oct 2026 it
+    had no Friday bar for 32 of 76 companies at 9:44 AM. Ask again for those one at a time. Returns the names still late."""
+    late = []
+    for c in comps:
+        t = c["ticker"]
+        if c["currency"] != "INR" or t not in data or data[t].index[-1] >= as_of: continue
+        try:
+            h = settled(yf.Ticker(t).history(period="5d", auto_adjust=False, actions=True).dropna(subset=["Close"]), t)
+        except Exception:
+            h = data[t].iloc[:0]
+        if cap is not None: h = h[h.index <= cap]
+        if len(h) and h.index[-1] > data[t].index[-1]:
+            data[t] = pd.concat([data[t][data[t].index < h.index[0]], h])
+        if data[t].index[-1] < as_of: late.append(c["name"])
+    return late
 
 
 def split_factor(h, after):
@@ -232,6 +253,7 @@ def main():
     if "--rebuild" in sys.argv:   # re-inline the last data after a change to site/index.html; no download
         build_pages(OUT.read_text()); print("rebuilt pages from", OUT.name); return
     force = "--force" in sys.argv
+    cap = pd.Timestamp(sys.argv[sys.argv.index("--as-of") + 1]) if "--as-of" in sys.argv else None
     comps, S = load_config()
     tickers = [c["ticker"] for c in comps]
     start = (min(pd.Timestamp(c["shares_asof"] or c["baseline_date"]) for c in comps if c["currency"] == "INR")
@@ -239,12 +261,19 @@ def main():
     start = min(start, (pd.Timestamp.today() - pd.Timedelta(days=40)).date().isoformat())
     sme = [c["ticker"] for c in comps if c["exchange"] == "NSE (SME)" and not c["ticker"].endswith("-SM.NS")]
     data = fetch(tickers + ["USDINR=X"], start, sme)
+    if cap is not None:
+        data = {t: h[h.index <= cap] for t, h in data.items()}
+        data = {t: h for t, h in data.items() if len(h)}
     qa, warn = [], []
 
     inr_dates = [data[c["ticker"]].index[-1] for c in comps if c["currency"] == "INR" and c["ticker"] in data]
     if not inr_dates:
         print("VALIDATION FAILED - nothing written: no Indian prices came back from Yahoo"); sys.exit(2)
     as_of = max(d for d in inr_dates if inr_dates.count(d) >= 0.25 * len(inr_dates))  # latest date most names share
+    late = catch_up(data, comps, as_of, cap)
+    if late:
+        qa.append(f"{len(late)} closes not yet posted for {as_of.date()}: {', '.join(late)}")
+        warn.append(f"{len(late)} companies still show an older close because Yahoo has not posted {as_of.date()} for them yet; a later run fills them in")
 
     prev = json.load(open(OUT)) if OUT.exists() else None
     fx, fx_warning = latest_fx(data, prev)
@@ -260,7 +289,7 @@ def main():
         old = prev_rows.get(t, {})
         if h is None or not len(h):                    # a company Yahoo misses keeps its last figures, with its date showing
             warn.append(f"{c['name']} ({t}): no price from Yahoo; keeping the last figures")
-            r.update({k: old.get(k) for k in ("price", "price_date", "mcap", "week_price", "mcap_chg", "price_chg", "week_chg", "lp_factor")})
+            r.update({k: old.get(k) for k in MARKET if k not in ("listing_price", "stale")})
             r.update(listing_price=old.get("listing_price", c["listing_price"]), stale=True)
             rows.append(r); continue
         last_d, px = h.index[-1], float(h["Close"].iloc[-1])
@@ -306,8 +335,20 @@ def main():
 
     if prev and str(as_of.date()) < prev["meta"]["as_of"]:
         print(f"VALIDATION FAILED - nothing written: the market date went back from {prev['meta']['as_of']} to {as_of.date()}"); sys.exit(2)
+    filled = []
     if prev and prev["meta"]["as_of"] == str(as_of.date()) and not force:
-        print(f"No new market data: still {as_of.date()}. Nothing written."); sys.exit(3)
+        # Same market date: write only the companies whose close is newer than the saved one, the ones Yahoo was late
+        # with last time. Every other row, and the rate, stay exactly as saved.
+        for i, r in enumerate(rows):
+            old = prev_rows.get(r["ticker"])
+            if old and (old.get("price_date") or "") >= (r.get("price_date") or ""):
+                rows[i] = {**r, **{k: old.get(k) for k in MARKET}}
+            else:
+                filled.append(r)
+        if not filled:
+            print(f"No new market data: still {as_of.date()}. Nothing written."); sys.exit(3)
+        fx = prev["meta"]["usd_inr"]
+        qa.append(f"filled late closes for {as_of.date()}: {', '.join(r['name'] for r in filled)}")
     if prev:
         total = lambda rs, rate: sum((p["mcap"] or 0) * (rate / 10 if p["currency"] == "USD" else 1) for p in rs)
         then, now = total(prev["rows"], fx), total(rows, fx)
@@ -327,6 +368,8 @@ def main():
     usd = sum(r["mcap"] for r in rows if r["currency"] == "USD" and r["mcap"])
     print(f"OK {as_of.date()}: {len(rows)} companies, fresh {fresh}, combined market cap ${inr / fx / 100 + usd / 1000:,.1f} Bn at {fx:.2f}")
     for w in warn: print("  review:", w)
+    if filled:
+        print("FILLED " + " ".join(profile_id(r["ticker"]) for r in filled)); sys.exit(4)
 
 
 if __name__ == "__main__":
