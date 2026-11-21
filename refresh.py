@@ -132,6 +132,39 @@ def catch_up(data, comps, as_of, cap=None):
     return late
 
 
+def fill_empty_closes(data, comps, cap=None):
+    """Yahoo can also post a session's daily bar with no close: on Saturday 21 Nov 2026, 36 companies had a 20 Nov bar
+    with an empty close, even at noon, so the run fell back to 19 Nov. The quote still carries that close. Take it from
+    there for a company behind the newest close, when the quote is from a later settled session and its previous close
+    matches ours. Runs before the market date is chosen. Returns the names filled."""
+    inr = [c for c in comps if c["currency"] == "INR" and len(data.get(c["ticker"], ()))]
+    if not inr: return []
+    newest = max(data[c["ticker"]].index[-1] for c in inr)
+    filled = []
+    for c in inr:
+        t, h = c["ticker"], data[c["ticker"]]
+        if h.index[-1] >= newest: continue
+        try:
+            tk = yf.Ticker(t)
+            tk.history(period="5d", auto_adjust=False)
+            meta, prev = tk.history_metadata or {}, f(tk.fast_info["previousClose"])
+        except Exception:
+            continue
+        px, when = f(meta.get("regularMarketPrice")), meta.get("regularMarketTime")
+        if px is None or prev is None or when is None: continue
+        when = when if isinstance(when, pd.Timestamp) else pd.Timestamp(when, unit="s", tz="UTC")
+        bar = settled(pd.DataFrame({"Close": [px]}, index=[when.tz_convert("Asia/Kolkata")]), t)
+        if not len(bar): continue                      # today's session before 4 PM: not a close yet
+        day, last = bar.index[-1], float(h["Close"].iloc[-1])
+        if day <= h.index[-1] or (cap is not None and day > cap): continue
+        if abs(prev / last - 1) > 0.005 or abs(px / prev - 1) > 0.2: continue
+        row = {col: 0.0 for col in h.columns}
+        row.update({k: px for k in ("Open", "High", "Low", "Close", "Adj Close") if k in h.columns})
+        data[t] = pd.concat([h, pd.DataFrame([row], index=[day])])
+        filled.append(c["name"])
+    return filled
+
+
 def split_factor(h, after):
     """Product of split ratios strictly after the given date (2 = 1:2 split or 1:1 bonus, 0.1 = 1:10 consolidation)."""
     if h is None or "Stock Splits" not in h: return 1.0, []
@@ -265,8 +298,10 @@ def main():
         data = {t: h[h.index <= cap] for t, h in data.items()}
         data = {t: h for t, h in data.items() if len(h)}
     qa, warn = [], []
+    quoted = fill_empty_closes(data, comps, cap)
+    if quoted: qa.append(f"{len(quoted)} closes taken from Yahoo's quote because the daily bar had none: {', '.join(quoted)}")
 
-    inr_dates = [data[c["ticker"]].index[-1] for c in comps if c["currency"] == "INR" and c["ticker"] in data]
+    inr_dates =[data[c["ticker"]].index[-1] for c in comps if c["currency"] == "INR" and c["ticker"] in data]
     if not inr_dates:
         print("VALIDATION FAILED - nothing written: no Indian prices came back from Yahoo"); sys.exit(2)
     as_of = max(d for d in inr_dates if inr_dates.count(d) >= 0.25 * len(inr_dates))  # latest date most names share
